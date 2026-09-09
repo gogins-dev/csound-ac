@@ -85,9 +85,11 @@ plugin uses `modelprompt_string/modelprompt_cache` under the current working
 directory.
 
 By default (`iregenerate` omitted) each call **reuses the latest cache** when
-present, and only calls the model on a cache miss. Pass `iregenerate=1` to force
-a new model response (next version), or `iregenerate=0` to require a cache hit
-(`iregenerate=0, iversion=N` pins an earlier version).
+present **and the prompt text is unchanged**, and only calls the model on a
+cache miss or when the prompt text has changed. Pass `iregenerate=1` to force
+a new model response (next version) even if the prompt is unchanged, or
+`iregenerate=0` to require a cache hit (`iregenerate=0, iversion=N` pins an
+earlier version).
 
 ### Example
 
@@ -547,7 +549,7 @@ The request is synchronous. Initialization of the calling instrument does not co
 
 Each result type has signatures with an optional JSON `options` string, an optional `iregenerate` flag, and an optional `iversion` pin used when freezing.
 
-Every call is assigned the next sequential prompt number for the Csound instance and always participates in local response caching. Omitting `iregenerate` reuses the latest cache when present; pass `1` to force a new version, or `0` / `0, N` to freeze.
+Every call is assigned the next sequential prompt number for the Csound instance and always participates in local response caching. Omitting `iregenerate` reuses the latest cache when present and the prompt text is unchanged; pass `1` to force a new version even if the prompt is unchanged, or `0` / `0, N` to freeze.
 
 The opcode uses its output type to determine the form of response requested from the model and how that response is converted to a Csound value.
 
@@ -618,8 +620,8 @@ requests an array of numbers because `values` has type `i[]`.
 
 Optional flag controlling whether this prompt calls the model or reuses a cached response.
 
-- Omitted (default): **auto** — reuse the latest cached version for this prompt number if one exists; otherwise call the model and store a new version.
-- Non-zero: **force** — always call the model and write the next version.
+- Omitted (default): **auto** — reuse the latest cached version for this prompt number if one exists **and was produced for the current prompt text**; otherwise call the model and store a new version.
+- Non-zero: **force** — always call the model and write the next version, even if the prompt text is unchanged.
 - Zero: **freeze** — never call the model; reuse a cached version (see `iversion`). Missing cache fails initialization.
 
 Prompt numbers are assigned automatically in call order within the Csound instance (1, 2, 3, …), including `modelprompt`, `modelprompt_orc`, `modelprompt_async`, and `modelprompt_orc_async`. Cached files are stored beside the `.csd` under a directory named from its basename:
@@ -638,7 +640,9 @@ where:
 
 The `.csd` path is taken from `MODELPROMPT_CSD` if set, otherwise from a `.csd` argument on the host process command line. If none is available, the plugin uses `modelprompt_string/modelprompt_cache` under the current working directory.
 
-Earlier versions remain on disk. After a successful run, simply omit `iregenerate` (or leave it unset) to reuse the cache. Use `iregenerate=1` only when you want a fresh model response.
+Each cache version stores the prompt that produced it in a sidecar file `{prompt_index}.{version}.prompt`. In auto mode, a cached response is reused only when that stored prompt matches the current prompt. Changing the prompt text therefore writes a new version instead of reusing the old response. Cache files without a sidecar (from earlier builds) are reused once and then associated with the current prompt.
+
+Earlier versions remain on disk. After a successful run, simply omit `iregenerate` (or leave it unset) to reuse the cache. Use `iregenerate=1` only when you want a fresh model response for an unchanged prompt.
 
 ### iversion
 
@@ -1101,7 +1105,7 @@ Return only the score text.
 
 ### iregenerate
 
-Optional flag; same meaning as for `modelprompt` (omitted = auto cache, `1` = force, `0` = freeze).
+Optional flag; same meaning as for `modelprompt` (omitted = auto cache, including regenerating when the prompt text changes; `1` = force; `0` = freeze).
 
 Prompt numbering and cache paths are the same as for `modelprompt`:
 `{csd_directory}/{csd_basename}/modelprompt_cache/{prompt_index}.{version}`.

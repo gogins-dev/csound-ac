@@ -13,7 +13,8 @@
 ; Run:
 ;   csound anthropic_sonnet_glass_garden.csd
 ;
-; Caching (default auto): omit iregenerate to reuse caches after the first run.
+; Caching (default auto): omit iregenerate to reuse caches after the first run
+; when the prompt text is unchanged. Editing a prompt generates a new response.
 ; Pass iregenerate=1 on a call to force a fresh model response.
 ; Pass iregenerate=0 to require a cache hit (fail if missing).
 ;

@@ -827,6 +827,44 @@ fs::path cache_file_path(const fs::path &dir, int prompt_index, int version)
     return dir / (std::to_string(prompt_index) + "." + std::to_string(version));
 }
 
+fs::path cache_prompt_path(const fs::path &dir, int prompt_index, int version)
+{
+    /* Concatenate; do not replace_extension — "1.1" would become "1.prompt". */
+    return dir / (std::to_string(prompt_index) + "." + std::to_string(version) +
+                  ".prompt");
+}
+
+bool write_file_bytes(const fs::path &path, const std::string &bytes)
+{
+    std::ofstream out(path, std::ios::binary);
+    if (!out) {
+        return false;
+    }
+    out << bytes;
+    return static_cast<bool>(out);
+}
+
+/* Auto mode may reuse a cache only when it was produced for this prompt text.
+   A missing sidecar is a legacy entry: treat it as a match and record the
+   current prompt so later edits are detected. Freeze/force ignore this. */
+bool auto_cache_usable(const fs::path &dir, int prompt_index, int version,
+                       const std::string &prompt)
+{
+    std::lock_guard<std::mutex> lock(g_cache_mutex);
+    const fs::path side = cache_prompt_path(dir, prompt_index, version);
+    if (!fs::exists(side)) {
+        write_file_bytes(side, prompt);
+        return true;
+    }
+    std::ifstream in(side, std::ios::binary);
+    if (!in) {
+        return true;
+    }
+    std::ostringstream ss;
+    ss << in.rdbuf();
+    return ss.str() == prompt;
+}
+
 std::optional<std::string> read_cache_version_at(const fs::path &dir, int prompt_index,
                                                 int version, int &version_out,
                                                 std::string &err)
@@ -875,8 +913,8 @@ std::optional<std::string> read_latest_cache_at(const fs::path &dir, int prompt_
 }
 
 bool write_new_cache_version_at(const fs::path &dir, int prompt_index,
-                               const std::string &payload, int &version_out,
-                               std::string &err)
+                               const std::string &payload, const std::string &prompt,
+                               int &version_out, std::string &err)
 {
     std::lock_guard<std::mutex> lock(g_cache_mutex);
     std::error_code ec;
@@ -888,12 +926,11 @@ bool write_new_cache_version_at(const fs::path &dir, int prompt_index,
     }
     const int version = latest_cache_version(dir, prompt_index) + 1;
     const fs::path path = cache_file_path(dir, prompt_index, version);
-    std::ofstream out(path, std::ios::binary);
-    if (!out) {
+    if (!write_file_bytes(path, payload)) {
         err = "failed to write cache file: " + path.string();
         return false;
     }
-    out << payload;
+    write_file_bytes(cache_prompt_path(dir, prompt_index, version), prompt);
     version_out = version;
     return true;
 }
@@ -912,15 +949,15 @@ std::optional<std::string> read_cache_version(CSOUND *csound, int prompt_index, 
 }
 
 bool write_new_cache_version(CSOUND *csound, int prompt_index,
-                            const std::string &payload, int &version_out,
-                            std::string &err)
+                            const std::string &payload, const std::string &prompt,
+                            int &version_out, std::string &err)
 {
     return write_new_cache_version_at(cache_directory(csound), prompt_index, payload,
-                                      version_out, err);
+                                      prompt, version_out, err);
 }
 
 enum class RegenMode {
-    Auto,  /* omitted: reuse latest cache if present, else call the model */
+    Auto,  /* omitted: reuse latest cache if present and prompt text matches */
     Force, /* non-zero: always call the model */
     Freeze /* zero: cache only; fail if missing */
 };
@@ -968,11 +1005,18 @@ bool obtain_model_text(CSOUND *csound,
     if (mode == RegenMode::Auto) {
         std::string cache_err;
         auto cached = read_cache(cache_err);
-        if (cached) {
+        if (cached &&
+            auto_cache_usable(cache_directory(csound), prompt_index, version, prompt)) {
             text = std::move(*cached);
             csound->Message(csound, "modelprompt: prompt %d version %d (cached)\n",
                             prompt_index, version);
             return true;
+        }
+        if (cached) {
+            csound->Message(csound,
+                            "modelprompt: prompt %d version %d skipped (prompt text "
+                            "changed)\n",
+                            prompt_index, version);
         }
     }
 
@@ -980,7 +1024,8 @@ bool obtain_model_text(CSOUND *csound,
         return false;
     }
     std::string cache_err;
-    if (!write_new_cache_version(csound, prompt_index, text, version, cache_err)) {
+    if (!write_new_cache_version(csound, prompt_index, text, prompt, version,
+                                 cache_err)) {
         err = cache_err;
         return false;
     }
@@ -1525,7 +1570,8 @@ int32_t start_async(CSOUND *csound, MYFLT *ihandle_out,
             }
         } else if (mode == RegenMode::Auto) {
             auto cached = read_cache();
-            if (cached) {
+            if (cached &&
+                auto_cache_usable(cache_dir, prompt_index, got_version, snap.prompt)) {
                 text = std::move(*cached);
                 ok = true;
             } else {
@@ -1533,7 +1579,8 @@ int32_t start_async(CSOUND *csound, MYFLT *ihandle_out,
                 if (ok) {
                     std::string cache_err;
                     if (!write_new_cache_version_at(cache_dir, prompt_index, text,
-                                                    got_version, cache_err)) {
+                                                    snap.prompt, got_version,
+                                                    cache_err)) {
                         ok = false;
                         err = cache_err;
                     }
@@ -1543,8 +1590,8 @@ int32_t start_async(CSOUND *csound, MYFLT *ihandle_out,
             ok = call_provider_snapshot(snap, kind, text, err);
             if (ok) {
                 std::string cache_err;
-                if (!write_new_cache_version_at(cache_dir, prompt_index, text, got_version,
-                                                cache_err)) {
+                if (!write_new_cache_version_at(cache_dir, prompt_index, text,
+                                                snap.prompt, got_version, cache_err)) {
                     ok = false;
                     err = cache_err;
                 }
