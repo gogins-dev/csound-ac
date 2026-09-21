@@ -129,14 +129,14 @@ these files to your home directory or other places.
 - `patches`: Include the full path of this directory in your Csound 
   environment variable `INCDIR`.
 
-- `modelprompt`: After installing csound-ac, make Csound load the plugin from
-  `<prefix>/lib/csound/plugins64-7.0/`. On macOS a typical approach is:
-
-  ```bash
-  mkdir -p ~/Library/csound/7.0/plugins64
-  ln -sf /opt/homebrew/lib/csound/plugins64-7.0/modelprompt.dylib \
-    ~/Library/csound/7.0/plugins64/modelprompt.dylib
-  ```
+- `modelprompt`: On macOS, `build-macos.sh` installs `modelprompt.dylib` where
+  Csound 7 loads it with no extra environment: `~/Library/csound/7.0/plugins64`
+  (local Csound) and, if present,
+  `/Applications/Csound/CsoundLib64.framework/Resources/Opcodes64` (official
+  installer CLI). Do not set `OPCODE7DIR64`. A packaging copy also remains at
+  `<prefix>/lib/csound/plugins64-7.0/`; Csound does not search that path on
+  macOS. On Linux, install or copy the plugin into
+  `~/.local/lib/csound/7.0/plugins64`.
 
   Examples install under `<prefix>/share/doc/csound-ac/modelprompt/examples/`.
   Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` before running them.
@@ -164,6 +164,8 @@ plugin (requires libcurl; disable with `-DBUILD_MODELPROMPT=OFF`). Install and
 package layout:
 
 - Plugin: `<prefix>/lib/csound/plugins64-7.0/modelprompt.*`
+  (macOS load paths: `~/Library/csound/7.0/plugins64/` and, if present,
+  `/Applications/Csound/CsoundLib64.framework/Resources/Opcodes64/`)
 - Docs: `<prefix>/share/doc/csound-ac/modelprompt/README.md`
 - Example: `<prefix>/share/doc/csound-ac/modelprompt/examples/anthropic_sonnet_instr_score.csd`
 

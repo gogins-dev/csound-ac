@@ -20,6 +20,13 @@ if [[ ! -f "$CSOUND_SOURCE/CMakeLists.txt" ]]; then
     exit 1
 fi
 
+# Csound's compiled-in plugin directory (CS_DEFAULT_PLUGINDIR) is the default
+# OPCODE7DIR64. Never set or rewrite OPCODE7DIR64 here: that replaces the
+# stock opcode path, rtaudio modules do not load, and `csound --devices`
+# reports nothing. Extra plugins belong in ~/Library/csound/7.0/plugins64.
+unset OPCODE7DIR64 || true
+unset OPCODE7DIR || true
+
 #
 # Start with a completely clean CMake configuration. This is important
 # because an old Debug configuration may have cached AddressSanitizer.

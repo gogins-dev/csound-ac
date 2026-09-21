@@ -56,6 +56,36 @@ echo "sudo is required for installation; enter your password if prompted."
 sudo -v
 sudo cmake --install "$build_dir"
 
+# Place modelprompt.dylib where Csound 7 actually searches without OPCODE7DIR64.
+# Leave OPCODE7DIR64 unset: it *replaces* Csound's compiled-in opcode directory,
+# so stock plugins (librtauhal, etc.) would not load.
+#
+# Two load paths exist on macOS:
+#   1. Local/source Csound (and /Library/Frameworks CsoundLib64 built the
+#      usual way) also searches ~/Library/csound/7.0/plugins64.
+#   2. The official Csound.app CLI is linked to
+#      /Applications/Csound/CsoundLib64.framework, which does *not* search
+#      that user directory. It only loads from its own Resources/Opcodes64.
+# Do not copy into a signed /Library/Frameworks/.../Opcodes64: that would
+# add an unsigned file to a sealed bundle.
+modelprompt_dylib=""
+if [[ -f "$build_dir/modelprompt/modelprompt.dylib" ]]; then
+    modelprompt_dylib="$build_dir/modelprompt/modelprompt.dylib"
+elif [[ -f "$build_dir/modelprompt.dylib" ]]; then
+    modelprompt_dylib="$build_dir/modelprompt.dylib"
+fi
+if [[ -n "$modelprompt_dylib" ]]; then
+    echo "Installing modelprompt.dylib into ${HOME}/Library/csound/7.0/plugins64..."
+    cmake --install "$build_dir" --component ModelpromptUser
+    installer_opcodes="/Applications/Csound/CsoundLib64.framework/Resources/Opcodes64"
+    if [[ -d "$installer_opcodes" ]]; then
+        echo "Installing modelprompt.dylib into ${installer_opcodes}..."
+        sudo install -m 755 "$modelprompt_dylib" "$installer_opcodes/modelprompt.dylib"
+    fi
+else
+    echo "Skipping Csound plugin install (modelprompt.dylib was not built)."
+fi
+
 # Venv / active-interpreter site-packages (absolute paths; excluded from stage_dist).
 if [[ -d "$(dirname "$venv_site")" ]] || [[ -n "${VIRTUAL_ENV:-}" ]]; then
     echo "Installing Python bindings into active interpreter site-packages..."

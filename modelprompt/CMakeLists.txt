@@ -80,7 +80,8 @@ else()
     )
 endif()
 
-# Standard Csound 7 64-bit plugin location under the install prefix.
+# Standard Csound 7 64-bit plugin location under the install prefix
+# (release ZIP and /opt/homebrew).
 if(NOT MODELPROMPT_PLUGIN_INSTALL_DIR)
     set(MODELPROMPT_PLUGIN_INSTALL_DIR "lib/csound/plugins64-7.0")
 endif()
@@ -90,6 +91,36 @@ install(TARGETS modelprompt
     RUNTIME DESTINATION "${MODELPROMPT_PLUGIN_INSTALL_DIR}"
     COMPONENT csound-ac
 )
+
+# macOS user plugin dir: a local Csound 7 (and a /Library/Frameworks
+# CsoundLib64 built with Csound's default Apple CMake options) loads this
+# in addition to its compiled-in Opcodes64 path when OPCODE7DIR64 is unset.
+# The official /Applications/Csound CLI does not search this directory;
+# build-macos.sh also copies the plugin into that app's Opcodes64.
+# Use install(FILES) rather than a second install(TARGETS): CMake merges
+# multiple TARGETS rules for the same target and would attach this
+# destination to the default csound-ac component (sudo install and
+# stage_dist must not write into $HOME).
+if(APPLE)
+    # Csound 7 user plugins live under Library/csound/<major>.0/, not the
+    # full dotted version (e.g. 7.1.0 would be the wrong directory).
+    if(CSOUND_VERSION_MAJOR AND NOT CSOUND_VERSION_MAJOR STREQUAL "")
+        set(_modelprompt_csound_api "${CSOUND_VERSION_MAJOR}.0")
+    else()
+        set(_modelprompt_csound_api "7.0")
+    endif()
+    set(MODELPROMPT_USER_PLUGIN_DIR
+        "$ENV{HOME}/Library/csound/${_modelprompt_csound_api}/plugins64")
+    message(STATUS "modelprompt user plugin dir: ${MODELPROMPT_USER_PLUGIN_DIR}")
+    install(FILES "$<TARGET_FILE:modelprompt>"
+        DESTINATION "${MODELPROMPT_USER_PLUGIN_DIR}"
+        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                    GROUP_READ GROUP_EXECUTE
+                    WORLD_READ WORLD_EXECUTE
+        COMPONENT ModelpromptUser
+        EXCLUDE_FROM_ALL
+    )
+endif()
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
     DESTINATION "share/doc/csound-ac/modelprompt"

@@ -22,10 +22,27 @@ Disable with `-DBUILD_MODELPROMPT=OFF`.
 The plugin installs to:
 
 ```text
-<prefix>/lib/csound/plugins64-7.0/modelprompt.dylib   # macOS
+~/Library/csound/7.0/plugins64/modelprompt.dylib
+    # macOS: local Csound 7 (and /Library/Frameworks CsoundLib64)
+/Applications/Csound/CsoundLib64.framework/Resources/Opcodes64/modelprompt.dylib
+    # macOS: official Csound installer CLI, if that app is present
+<prefix>/lib/csound/plugins64-7.0/modelprompt.dylib   # packaging copy; not searched on macOS
 <prefix>/lib/csound/plugins64-7.0/modelprompt.so      # Linux
 <prefix>/lib/csound/plugins64-7.0/modelprompt.dll     # Windows
 ```
+
+On macOS, `build-macos.sh` installs into the load paths above. Leave
+`OPCODE7DIR64` unset: that variable *replaces* Csound's compiled-in opcode
+directory, so realtime modules such as `librtauhal` would not load.
+
+The official `/Applications/Csound` CLI is linked to its bundled
+`CsoundLib64.framework` and does not search `~/Library/csound/7.0/plugins64`.
+A local Csound 7 built from source does search that user directory, in
+addition to its own framework `Opcodes64`.
+
+On Linux, extra plugins can go in `~/.local/lib/csound/7.0/plugins64` or
+`CS_USER_PLUGINDIR`. Do not set `OPCODE7DIR64` to *only* an extra plugin
+directory.
 
 Documentation and examples install to:
 
@@ -33,19 +50,6 @@ Documentation and examples install to:
 <prefix>/share/doc/csound-ac/modelprompt/
 <prefix>/share/doc/csound-ac/modelprompt/examples/
 ```
-
-Csound must find the plugin directory. On macOS, user plugins are typically:
-
-```bash
-mkdir -p ~/Library/csound/7.0/plugins64
-ln -sf /opt/homebrew/lib/csound/plugins64-7.0/modelprompt.dylib \
-  ~/Library/csound/7.0/plugins64/modelprompt.dylib
-```
-
-(Adjust the source path if you installed under `/usr/local` or another prefix.)
-
-On Linux, ensure `OPCODE7DIR64` includes `<prefix>/lib/csound/plugins64-7.0`,
-or copy/symlink the plugin into a directory already listed there.
 
 ### Configuration
 
@@ -197,7 +201,7 @@ ihandle = modelprompt_async(
 kstatus, Sresult modelprompt_result ihandle
 ```
 
-The asynchronous opcodes do not wait for network communication on Csound's audio-performance thread.
+The asynchronous opcodes do not wait for network communication on Csound's audio-performance thread. HTTP posts themselves are HTTP/1.1, limited to two in flight, and retried on transient transport errors (many parallel HTTP/2 connections to Anthropic often fail with a framing-layer error).
 
 In the initial interface described here, asynchronous requests return text. Typed Csound values such as numbers and arrays are obtained with the synchronous `modelprompt` opcode. This keeps the asynchronous API small and avoids requiring a Csound result type to be specified before the request is launched.
 

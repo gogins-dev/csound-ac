@@ -1,0 +1,17 @@
+
+Write valid Csound i-statements for instruments Glass and Pad only.
+
+Use this MIDI pitch set (convert each to Hz with cpsmidinn):
+ 57.0 62.0 65.0 67.0 69.0 72.0 65.0 74.0
+
+Constraints:
+- Onset times from 0 to 80 seconds (Section I only; later sections continue these voices).
+- About 40 to 56 Glass notes: short chimes (durations 0.5 to 1.8), spread through the whole window.
+- About 12 to 18 Pad notes: longer tones (durations 10 to 20) that overlap so the pad bed never drops out.
+- p4 amplitudes: Glass 0.35–0.55 (prominent chimes), Pad 0.042–0.085 (3 dB softer than 0.06–0.12).
+- p5 must be frequency in Hz (not MIDI).
+- Slow, sparse garden tempo — leave space between events.
+- Prefer gentle rising and falling shapes through the pitch set.
+
+Return only i-statements, one per line.
+No comments, markdown, f-statements, or e-statement.

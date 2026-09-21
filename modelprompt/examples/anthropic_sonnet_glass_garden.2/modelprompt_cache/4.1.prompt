@@ -1,0 +1,21 @@
+
+Write a second section as valid Csound i-statements.
+
+Instruments allowed: Glass, Pad, and Spark.
+Spark is a bright, short metallic attack — sonically opposite the soft Pad.
+Glass and Pad must CONTINUE throughout this section (not stop when Spark enters).
+
+Reuse this MIDI pitch set (convert to Hz with cpsmidinn):
+ 57.0 62.0 65.0 67.0 69.0 72.0 65.0 74.0
+
+Constraints:
+- Absolute onset times from 80 to 160 seconds.
+- Spark is the new lead: about 80 to 110 Spark notes, durations 0.08 to 0.35.
+- Noticeably faster and denser than Section I (quicker successive onsets).
+- Continuity (required): about 40 to 56 Glass chimes spread across 80–160s,
+  plus 12 to 16 overlapping Pad tones whose envelopes cover the whole window
+  (durations 12–22 so the pad bed never drops out).
+- p4: Spark 0.10–0.20, Glass 0.18–0.32, Pad 0.035–0.071 (3 dB softer than 0.05–0.10).
+- p5 in Hz. Last onset by time 160; notes may ring a little past that.
+- Return only i-statements, one per line.
+- No comments, markdown, f-statements, or e-statement.

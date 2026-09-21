@@ -13,7 +13,8 @@
   Thread safety
   -------------
   - Network I/O for modelprompt_async / modelprompt_orc_async runs on
-    std::thread workers.
+    std::thread workers. HTTP uses HTTP/1.1 with at most two inflight
+    posts and retries on transient transport errors.
   - Request status/result are guarded by per-request and registry mutexes;
     modelprompt_result / modelprompt_orc_result never block on I/O.
   - Orchestra compilation for modelprompt_orc_result occurs only on the
@@ -26,7 +27,9 @@
 #include <algorithm>
 #include <atomic>
 #include <cctype>
+#include <chrono>
 #include <cmath>
+#include <condition_variable>
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
@@ -449,10 +452,63 @@ struct HttpResult {
     std::string error;
 };
 
+/* Anthropic/OpenAI HTTP/2 multiplexing of many parallel libcurl easy
+   handles often fails with "Error in the HTTP2 framing layer". Cap
+   inflight posts and speak HTTP/1.1; retry transient transport errors. */
+std::mutex g_http_mu;
+std::condition_variable g_http_cv;
+int g_http_inflight = 0;
+constexpr int kMaxHttpInflight = 2;
+constexpr int kHttpAttempts = 4;
+
+struct HttpSlot {
+    HttpSlot()
+    {
+        std::unique_lock<std::mutex> lock(g_http_mu);
+        g_http_cv.wait(lock, [] { return g_http_inflight < kMaxHttpInflight; });
+        ++g_http_inflight;
+    }
+    ~HttpSlot()
+    {
+        std::lock_guard<std::mutex> lock(g_http_mu);
+        --g_http_inflight;
+        g_http_cv.notify_one();
+    }
+};
+
+bool curl_is_retryable(CURLcode rc)
+{
+    switch (rc) {
+    case CURLE_COULDNT_CONNECT:
+    case CURLE_GOT_NOTHING:
+    case CURLE_SEND_ERROR:
+    case CURLE_RECV_ERROR:
+    case CURLE_PARTIAL_FILE:
+#ifdef CURLE_HTTP2
+    case CURLE_HTTP2:
+#endif
+#ifdef CURLE_HTTP2_STREAM
+    case CURLE_HTTP2_STREAM:
+#endif
+#ifdef CURLE_HTTP3
+    case CURLE_HTTP3:
+#endif
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool http_status_retryable(long status)
+{
+    return status == 429 || status == 502 || status == 503 || status == 529;
+}
+
 HttpResult http_post_json(const std::string &url,
                           const std::vector<std::string> &headers,
                           const std::string &body)
 {
+    HttpSlot slot;
     curl_global();
     HttpResult result;
     CURL *curl = curl_easy_init();
@@ -475,12 +531,31 @@ HttpResult http_post_json(const std::string &url,
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result.body);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "csound-modelprompt/1.0");
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 120L);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30L);
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 
-    const CURLcode rc = curl_easy_perform(curl);
-    if (rc != CURLE_OK) {
+    CURLcode rc = CURLE_OK;
+    for (int attempt = 0; attempt < kHttpAttempts; ++attempt) {
+        result.body.clear();
+        result.error.clear();
+        result.status = 0;
+        rc = curl_easy_perform(curl);
+        if (rc == CURLE_OK) {
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &result.status);
+            if (http_status_retryable(result.status) && attempt + 1 < kHttpAttempts) {
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds(400 * (1 << attempt)));
+                continue;
+            }
+            break;
+        }
         result.error = curl_easy_strerror(rc);
-    } else {
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &result.status);
+        if (!curl_is_retryable(rc) || attempt + 1 >= kHttpAttempts) {
+            break;
+        }
+        std::this_thread::sleep_for(
+            std::chrono::milliseconds(400 * (1 << attempt)));
     }
 
     curl_slist_free_all(hdrs);
