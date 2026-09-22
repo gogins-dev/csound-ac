@@ -39,6 +39,8 @@ gSProvider = "anthropic"
 gSModel = "claude-sonnet-5"
 
 giComposeDone init 0
+; Last onsets ~240 s, pads up to 16 s, then delay/reverb tails and a fade.
+giPerfEnd = 285
 
 opcode PrintPfields, 0, 0
     prints "%-24s i %9.4f t %9.4f d %9.4f p4 %9.4f p5 %9.4f #%3d\n", nstrstr(p1), p1, p2, p3, p4, p5, active(p1)
@@ -266,6 +268,7 @@ Keep the Glass chime/wineglass design (high-Q bar modes, long expon ring).
 Do not revert Glass to eight loud clangorous partials.
 Keep Echo feedback high (ifb 0.82 or above). Delayed repeats must fade slowly
 so textures accumulate over the four-minute form. Do not lower ifb below 0.75.
+Keep Master's kfade linseg that holds until 268 s then fades to 0 over 17 s.
 instr Glass
   ; Struck wineglass / small chime: inharmonic bar modes, high Q, long ring.
   PrintPfields
@@ -367,8 +370,9 @@ instr Master
   PrintPfields
   aL inleta "leftin"
   aR inleta "rightin"
-  aOutL = tanh(aL * 4)
-  aOutR = tanh(aR * 4)
+  kfade linseg 1, 268, 1, 17, 0
+  aOutL = tanh(aL * 4) * kfade
+  aOutR = tanh(aR * 4) * kfade
   outc aOutL, aOutR
 endin
 
@@ -395,7 +399,7 @@ alwayson "Master"
     scorelinei(Sscore2)
     scorelinei(Sscore3)
     prints("All three sections are in the score.\n\n")
-    event("e", 0, 242)
+    event("e", 0, giPerfEnd)
 ComposeSkip:
 endin
 
