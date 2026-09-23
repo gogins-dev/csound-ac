@@ -1,0 +1,124 @@
+instr Glass
+  ; Struck wineglass / small chime: inharmonic bar modes, high Q, long ring.
+  PrintPfields
+  iamp = p4
+  ifreq = p5
+  aclk expon 1, 0.01, 0.001
+  astrike rand 1
+  aexc mpulse 1, 0
+  aexc = aexc + astrike * aclk * 0.18
+  a1 reson aexc, ifreq * 1.000, ifreq * 0.0016, 2
+  a2 reson aexc, ifreq * 2.756, ifreq * 0.0024, 2
+  a3 reson aexc, ifreq * 5.404, ifreq * 0.0040, 2
+  a4 reson aexc, ifreq * 8.933, ifreq * 0.0065, 2
+  a5 reson aexc, ifreq * 13.34, ifreq * 0.0110, 2
+  aenv expon iamp, p3, iamp * 0.001
+  asig = (a1*1.00 + a2*0.48 + a3*0.22 + a4*0.10 + a5*0.05) * aenv * 0.88
+  aL = asig
+  aR delay asig, 0.00023
+  outleta "leftout", aL
+  outleta "rightout", aR
+endin
+
+instr Pad
+  PrintPfields
+  iamp = p4
+  ifreq = p5
+  aenv linen iamp, p3 * 0.35, p3, p3 * 0.35
+  a1 oscili 0.45, ifreq * 0.997
+  a2 oscili 0.45, ifreq * 1.003
+  a3 oscili 0.25, ifreq * 2.001
+  aL = (a1 + a3) * aenv * 0.708
+  aR = (a2 + a3) * aenv * 0.708
+  outleta "leftout", aL
+  outleta "rightout", aR
+endin
+
+instr Spark
+  ; Bright, short metallic contrast to Pad (FM-ish + noise tick).
+  PrintPfields
+  iamp = p4
+  ifreq = p5
+  aenv expon iamp, p3, iamp * 0.001
+  amod oscili ifreq * 2.7, ifreq * 5.13
+  acar oscili 0.7, ifreq + amod
+  aclick mpulse 1, 0
+  aclick = reson(aclick, ifreq * 6.0, ifreq * 0.4, 2) * 0.15
+  asig = (acar + aclick) * aenv * 0.494
+  aL = asig * 0.85
+  aR = asig * 1.0
+  outleta "leftout", aL
+  outleta "rightout", aR
+endin
+
+instr Pulse
+  ; Gated pulse wave an octave down -- a clock, not a pad. Dry into Reverb.
+  PrintPfields
+  iamp = p4
+  ifreq = p5
+  aenv linen iamp, 0.012, p3, 0.05
+  apulse vco2 0.55, ifreq * 0.5, 2, 0.18
+  afilt butterlp apulse, ifreq * 2.8
+  kgate lfo 0.5, 2.9, 3
+  agate = 0.08 + (0.5 + kgate) * 0.92
+  asig = afilt * aenv * agate * 0.12
+  outleta "leftout", asig * 0.90
+  outleta "rightout", asig * 1.10
+endin
+
+instr Echo
+  ; Stereo feedback delay. High feedback so repeats fade slowly and stack.
+  PrintPfields
+  aL inleta "leftin"
+  aR inleta "rightin"
+  idel = 0.38
+  ifb = 0.85
+  iwet = 0.52
+  aLfb init 0
+  aRfb init 0
+  aLfb delay aL + aRfb * ifb, idel
+  aRfb delay aR + aLfb * ifb, idel
+  aOutL = aL * (1 - iwet) + aLfb * iwet
+  aOutR = aR * (1 - iwet) + aRfb * iwet
+  outleta "leftout", aOutL
+  outleta "rightout", aOutR
+endin
+
+instr Reverb
+  ; Do not name reverb signals aX -- that identifier breaks the right outleta path.
+  PrintPfields
+  aL inleta "leftin"
+  aR inleta "rightin"
+  aRevL, aRevR reverbsc aL, aR, 0.90, 12000
+  iwet = 0.42
+  aOutL = aL * (1 - iwet) + aRevL * iwet
+  aOutR = aR * (1 - iwet) + aRevR * iwet
+  outleta "leftout", aOutL
+  outleta "rightout", aOutR
+endin
+
+instr Master
+  PrintPfields
+  aL inleta "leftin"
+  aR inleta "rightin"
+  kfade linseg 1, 268, 1, 17, 0
+  aOutL = tanh(aL * 4) * kfade
+  aOutR = tanh(aR * 4) * kfade
+  outc aOutL, aOutR
+endin
+
+connect "Glass", "leftout", "Echo", "leftin"
+connect "Glass", "rightout", "Echo", "rightin"
+connect "Spark", "leftout", "Echo", "leftin"
+connect "Spark", "rightout", "Echo", "rightin"
+connect "Pulse", "leftout", "Reverb", "leftin"
+connect "Pulse", "rightout", "Reverb", "rightin"
+connect "Pad", "leftout", "Reverb", "leftin"
+connect "Pad", "rightout", "Reverb", "rightin"
+connect "Echo", "leftout", "Reverb", "leftin"
+connect "Echo", "rightout", "Reverb", "rightin"
+connect "Reverb", "leftout", "Master", "leftin"
+connect "Reverb", "rightout", "Master", "rightin"
+alwayson "Echo"
+alwayson "Reverb"
+alwayson "Master"

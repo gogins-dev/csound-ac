@@ -1,0 +1,29 @@
+
+Write valid Csound i-statements for instruments Glass and Pad only.
+
+TONIC MIDI pitch set (convert each to Hz with cpsmidinn):
+ 50.0 62.0 65.0 69.0 72.0 74.0 69.0 76.0
+
+E minor MIDI set (destination key): 52 59 64 66 67 69 71 76
+
+This is slice 2 of 4 of Section I. Fill THIS 20-second window only.
+
+Harmony for THIS slice:
+Remain in the TONIC. Use only the tonic MIDI set. Do not modulate.
+
+Constraints:
+- Onset times from 20 to 40 seconds (absolute). First onset within 0.5 s of 20;
+  last onset within 1 s of 40. Distribute evenly; do not cluster at the start.
+- About 16 to 24 Glass notes: short chimes (durations 0.5 to 1.8).
+- About 6 to 10 Pad notes: longer tones (durations 8 to 16) that overlap so the
+  pad bed never drops out in this window.
+- Emit Glass AND Pad (not Pad only). Finish the full note list.
+- p4 amplitudes: Glass 0.35–0.55 (prominent chimes), Pad 0.042–0.085 (3 dB softer than 0.06–0.12).
+- p5 must be frequency in Hz (not MIDI).
+- Slow, sparse garden tempo — leave space between events.
+- Prefer gentle rising and falling shapes through the pitch set.
+
+Return only i-statements, one per line.
+Each line MUST use a quoted name: i "Glass" start dur amp freq (or i "Pad").
+Never write numeric instruments (i1, i2, i3, …).
+No comments, markdown, f-statements, or e-statement.
