@@ -367,6 +367,8 @@ Sresult = modelprompt(
 
 uses the value of `ANTHROPIC_API_KEY`.
 
+Anthropic Claude Sonnet 5 uses adaptive thinking by default. That is left on: thinking tokens are part of a well-considered score. `max_tokens` is 32768 so thinking and the returned text can both fit. If a response still contains only a thinking block (no text), the plugin retries that call once with thinking disabled so initialization does not fail.
+
 The same environment variables are used by `modelprompt_async`.
 
 If the required environment variable is not defined, or if the API key is rejected by the provider, the request fails and the plugin reports the provider error when available.

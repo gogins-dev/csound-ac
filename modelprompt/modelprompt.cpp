@@ -116,7 +116,8 @@ std::string json_escape(std::string_view in)
 {
     std::string out;
     out.reserve(in.size() + 8);
-    for (char c : in) {
+    for (char ch : in) {
+        const unsigned char c = static_cast<unsigned char>(ch);
         switch (c) {
         case '\\': out += "\\\\"; break;
         case '"':  out += "\\\""; break;
@@ -124,12 +125,13 @@ std::string json_escape(std::string_view in)
         case '\r': out += "\\r"; break;
         case '\t': out += "\\t"; break;
         default:
-            if (static_cast<unsigned char>(c) < 0x20) {
+            if (c < 0x20) {
                 char buf[8];
-                std::snprintf(buf, sizeof(buf), "\\u%04x", c);
+                std::snprintf(buf, sizeof(buf), "\\u%04x",
+                              static_cast<unsigned>(c));
                 out += buf;
             } else {
-                out += c;
+                out += static_cast<char>(c);
             }
         }
     }
@@ -669,6 +671,79 @@ bool call_openai(CSOUND *csound,
     return true;
 }
 
+std::string anthropic_messages_json(const std::string &model,
+                                    const std::string &system,
+                                    const std::string &prompt,
+                                    const std::string &options,
+                                    bool disable_thinking)
+{
+    std::ostringstream body;
+    body << "{"
+         << "\"model\":\"" << json_escape(model) << "\","
+         << "\"max_tokens\":32768,";
+    if (disable_thinking) {
+        body << "\"thinking\":{\"type\":\"disabled\"},";
+    }
+    body << "\"system\":\"" << json_escape(system) << "\","
+         << "\"messages\":[{\"role\":\"user\",\"content\":\""
+         << json_escape(prompt) << "\"}]"
+         << merge_options_object(options)
+         << "}";
+    return body.str();
+}
+
+HttpResult anthropic_http_post(const std::string &key, const std::string &body)
+{
+    return http_post_json(
+        "https://api.anthropic.com/v1/messages",
+        {"x-api-key: " + key, "anthropic-version: 2023-06-01"},
+        body);
+}
+
+bool anthropic_request(const std::string &key,
+                       const std::string &model,
+                       const std::string &prompt,
+                       const std::string &options,
+                       ResultKind kind,
+                       std::string &out,
+                       std::string &err)
+{
+    const std::string system = structured_instruction(kind);
+    auto post = [&](bool disable_thinking) {
+        return anthropic_http_post(
+            key,
+            anthropic_messages_json(model, system, prompt, options, disable_thinking));
+    };
+
+    /* Thinking stays on by default. If the response has no text block
+       (thinking consumed max_tokens), retry once with thinking off. */
+    HttpResult http = post(false);
+    std::optional<std::string> content;
+    if (http.error.empty() && http.status >= 200 && http.status < 300) {
+        content = extract_anthropic_text(http.body);
+    }
+    if (!content) {
+        http = post(true);
+        if (http.error.empty() && http.status >= 200 && http.status < 300) {
+            content = extract_anthropic_text(http.body);
+        }
+    }
+    if (!http.error.empty()) {
+        err = http.error;
+        return false;
+    }
+    if (http.status < 200 || http.status >= 300) {
+        err = "Anthropic HTTP " + std::to_string(http.status) + ": " + http.body;
+        return false;
+    }
+    if (!content) {
+        err = anthropic_missing_text_diag(http.body);
+        return false;
+    }
+    out = strip_code_fences(*content);
+    return true;
+}
+
 bool call_anthropic(CSOUND *csound,
                     const std::string &model,
                     const std::string &prompt,
@@ -682,36 +757,7 @@ bool call_anthropic(CSOUND *csound,
         err = "ANTHROPIC_API_KEY is not set";
         return false;
     }
-    const std::string system = structured_instruction(kind);
-    std::ostringstream body;
-    body << "{"
-         << "\"model\":\"" << json_escape(model) << "\","
-         << "\"max_tokens\":8192,"
-         << "\"system\":\"" << json_escape(system) << "\","
-         << "\"messages\":[{\"role\":\"user\",\"content\":\""
-         << json_escape(prompt) << "\"}]"
-         << merge_options_object(options)
-         << "}";
-
-    const auto http = http_post_json(
-        "https://api.anthropic.com/v1/messages",
-        {"x-api-key: " + key, "anthropic-version: 2023-06-01"},
-        body.str());
-    if (!http.error.empty()) {
-        err = http.error;
-        return false;
-    }
-    if (http.status < 200 || http.status >= 300) {
-        err = "Anthropic HTTP " + std::to_string(http.status) + ": " + http.body;
-        return false;
-    }
-    auto content = extract_anthropic_text(http.body);
-    if (!content) {
-        err = anthropic_missing_text_diag(http.body);
-        return false;
-    }
-    out = strip_code_fences(*content);
-    return true;
+    return anthropic_request(key, model, prompt, options, kind, out, err);
 }
 
 bool call_provider(CSOUND *csound,
@@ -1243,35 +1289,8 @@ bool call_provider_snapshot(const ProviderSnapshot &snap,
             err = "ANTHROPIC_API_KEY is not set";
             return false;
         }
-        const std::string system = structured_instruction(kind);
-        std::ostringstream body;
-        body << "{"
-             << "\"model\":\"" << json_escape(snap.model) << "\","
-             << "\"max_tokens\":8192,"
-             << "\"system\":\"" << json_escape(system) << "\","
-             << "\"messages\":[{\"role\":\"user\",\"content\":\""
-             << json_escape(snap.prompt) << "\"}]"
-             << merge_options_object(snap.options)
-             << "}";
-        const auto http = http_post_json(
-            "https://api.anthropic.com/v1/messages",
-            {"x-api-key: " + snap.anthropic_key, "anthropic-version: 2023-06-01"},
-            body.str());
-        if (!http.error.empty()) {
-            err = http.error;
-            return false;
-        }
-        if (http.status < 200 || http.status >= 300) {
-            err = "Anthropic HTTP " + std::to_string(http.status) + ": " + http.body;
-            return false;
-        }
-        auto content = extract_anthropic_text(http.body);
-        if (!content) {
-            err = anthropic_missing_text_diag(http.body);
-            return false;
-        }
-        out = strip_code_fences(*content);
-        return true;
+        return anthropic_request(snap.anthropic_key, snap.model, snap.prompt,
+                                 snap.options, kind, out, err);
     }
 
     err = "unsupported provider: " + snap.provider;
