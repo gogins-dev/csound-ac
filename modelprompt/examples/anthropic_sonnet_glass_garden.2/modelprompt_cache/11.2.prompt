@@ -1,0 +1,10 @@
+
+Write a third-section slice as valid Csound i-statements.
+
+Instruments allowed: Glass, Pad, Spark, and Pulse.
+Pulse is a gated square-wave pulse (octave down, on/off chopping) -- not a pad
+and not a swell. It must sound like a heartbeat/clock, distinct from Pad.
+Glass, Pad, and Spark must CONTINUE throughout this slice (layered under Pulse).
+Pulse must be clearly audible. Every slice MUST include many i "Pulse" lines.
+
+TONIC MIDI set (convert to Hz with cps

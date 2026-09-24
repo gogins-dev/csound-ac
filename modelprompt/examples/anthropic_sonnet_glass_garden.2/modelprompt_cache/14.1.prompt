@@ -1,0 +1,47 @@
+
+Write a third-section slice as valid Csound i-statements.
+
+Instruments allowed: Glass, Pad, Spark, and Pulse.
+Pulse is a gated square-wave pulse (octave down, on/off chopping) -- not a pad
+and not a swell. It must sound like a heartbeat/clock, distinct from Pad.
+Glass, Pad, and Spark must CONTINUE throughout this slice (layered under Pulse).
+Pulse must be clearly audible. Every slice MUST include many i "Pulse" lines.
+
+TONIC MIDI set (convert to Hz with cpsmidinn):
+ 50.0 62.0 65.0 69.0 72.0 74.0 69.0 76.0
+E minor MIDI set (leaving this key): 52 59 64 66 67 69 71 76
+
+This is slice 4 of 4 of Section III. Fill THIS 20-second window only.
+
+Harmony for THIS slice:
+Remain in the TONIC. Use only the tonic MIDI set.
+
+TIMEBASE: p2 is ABSOLUTE performance time in [220, 240].
+Example first event: i "Pulse" 220.25 0.8 0.18 146.83
+i "Pulse" 0.0 ... or i "Pad" 60 ... is WRONG for this window.
+p4 is amplitude in (0, 1], never MIDI 50-76. p5 is Hz >= 40, never 0.35.
+p5 is a numeric Hz literal (e.g. 146.83), never a MIDI key number
+and never cpsmidinn() or any expression. Four numbers after the name:
+i "Name" start dur amp freq. No comment lines. i-statements only.
+
+Constraints:
+- Absolute onset times from 220 to 240. First onset within 0.5 s of 220;
+  last onset within 1 s of 240. Distribute evenly; do not cluster at the start.
+- Pulse is the lead: about 18 to 25 Pulse notes, durations 0.5 to 2, with
+  onsets about 0.8 to 1.1 s apart (2x slower than 36-50 notes at 0.25-1 s).
+  Every slice MUST contain Pulse events.
+- Pulse notes are short gated hits, not slow swells: durations 0.5 to 2,
+  but the instrument itself chops; prefer lower (bass/tenor) pitches.
+- Continuity:
+  - Pad: 6 to 8 overlapping long tones (durations 8-16).
+  - Glass: about 16 to 24 chimes.
+  - Spark: about 16 to 24 accents (slightly less dense than Section II).
+- Emit Pulse, Spark, Glass, AND Pad. Finish the full list.
+- p4: Pulse 0.14-0.24 (audible gated hits), Spark 0.08-0.16,
+  Glass 0.18-0.32, Pad 0.035-0.071 (Pad 3 dB softer than 0.05-0.10).
+- p5 in Hz. Notes may ring a little past 240; the piece rings to ~240.
+- Return only i-statements, one per line.
+- Each line MUST use a quoted name: i "Pulse" start dur amp freq
+  (or i "Spark" / i "Glass" / i "Pad"). Never write numeric instruments
+  (i1, i2, i3, ...).
+- No comments, markdown, f-statements, or e-statement.

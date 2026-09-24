@@ -45,6 +45,300 @@ opcode PrintPfields, 0, 0
     prints "%-24s i %9.4f t %9.4f d %9.4f p4 %9.4f p5 %9.4f #%3d\n", nstrstr(p1), p1, p2, p3, p4, p5, active(p1)
 endop
 
+; scoreline / scorelinei do not treat ';' as a comment. Never send comment
+; lines to them. This opcode drops those lines only.
+opcode ScoreNoComments, S, S
+    Sin xin
+    Sout = ""
+    iscan = 0
+    ilen = strlen(Sin)
+    while iscan < ilen do
+        Srest = strsub(Sin, iscan)
+        inl = strindex(Srest, "\n")
+        if inl < 0 then
+            Sline = Srest
+            iscan = ilen
+        else
+            Sline = strsub(Srest, 0, inl)
+            iscan = iscan + inl + 1
+        endif
+        ij = 0
+        iln = strlen(Sline)
+        icont = 1
+        while ij < iln && icont == 1 do
+            ic = strchar(Sline, ij)
+            if ic == 32 || ic == 9 || ic == 13 then
+                ij += 1
+            else
+                icont = 0
+            endif
+        od
+        if ij < iln then
+            if strchar(Sline, ij) != 59 then
+                Sout = strcat(Sout, strsub(Sline, ij))
+                Sout = strcat(Sout, "\n")
+            endif
+        endif
+    od
+    xout Sout
+endop
+
+; Keep every i-statement. Shift a local 0-N clock into [it0, it1],
+; map i1..i4 to names, and put amplitude in p4 / Hz in p5.
+opcode ScoreNormSlice, S, Sii
+    Sin, it0, it1 xin
+    ivoice[] init 256
+    istart[] init 256
+    idur[] init 256
+    iampv[] init 256
+    ifreqv[] init 256
+    invals[] init 8
+    inev = 0
+    iscan = 0
+    ilen = strlen(Sin)
+    while iscan < ilen do
+        Srest = strsub(Sin, iscan)
+        inl = strindex(Srest, "\n")
+        if inl < 0 then
+            Sline = Srest
+            iscan = ilen
+        else
+            Sline = strsub(Srest, 0, inl)
+            iscan = iscan + inl + 1
+        endif
+        ij = 0
+        iln = strlen(Sline)
+        icont = 1
+        while ij < iln && icont == 1 do
+            ic = strchar(Sline, ij)
+            if ic == 32 || ic == 9 || ic == 13 then
+                ij += 1
+            else
+                icont = 0
+            endif
+        od
+        if ij < iln then
+            if strchar(Sline, ij) == 105 && inev < 256 then
+                ipos = ij + 1
+                ivo = 0
+                Snm = ""
+                if ipos < iln then
+                    ic = strchar(Sline, ipos)
+                    if ic >= 48 && ic <= 57 then
+                        in0 = ipos
+                        icontn = 1
+                        while ipos < iln && icontn == 1 do
+                            ic = strchar(Sline, ipos)
+                            if ic >= 48 && ic <= 57 then
+                                ipos += 1
+                            else
+                                icontn = 0
+                            endif
+                        od
+                        ivo = strtod(strsub(Sline, in0, ipos))
+                    else
+                        icont = 1
+                        while ipos < iln && icont == 1 do
+                            ic = strchar(Sline, ipos)
+                            if ic == 32 || ic == 9 then
+                                ipos += 1
+                            else
+                                icont = 0
+                            endif
+                        od
+                        if ipos < iln then
+                            ic = strchar(Sline, ipos)
+                            if ic == 34 then
+                                ipos += 1
+                                in0 = ipos
+                                icontn = 1
+                                while ipos < iln && icontn == 1 do
+                                    if strchar(Sline, ipos) == 34 then
+                                        icontn = 0
+                                    else
+                                        ipos += 1
+                                    endif
+                                od
+                                Snm = strsub(Sline, in0, ipos)
+                                if ipos < iln then
+                                    ipos += 1
+                                endif
+                            elseif ic >= 48 && ic <= 57 then
+                                in0 = ipos
+                                icontn = 1
+                                while ipos < iln && icontn == 1 do
+                                    ic = strchar(Sline, ipos)
+                                    if ic >= 48 && ic <= 57 then
+                                        ipos += 1
+                                    else
+                                        icontn = 0
+                                    endif
+                                od
+                                ivo = strtod(strsub(Sline, in0, ipos))
+                            else
+                                in0 = ipos
+                                icontn = 1
+                                while ipos < iln && icontn == 1 do
+                                    ic = strchar(Sline, ipos)
+                                    if (ic >= 65 && ic <= 90) || (ic >= 97 && ic <= 122) then
+                                        ipos += 1
+                                    else
+                                        icontn = 0
+                                    endif
+                                od
+                                Snm = strsub(Sline, in0, ipos)
+                            endif
+                            if ivo == 0 then
+                                if strcmp(Snm, "Glass") == 0 then
+                                    ivo = 1
+                                elseif strcmp(Snm, "Pad") == 0 then
+                                    ivo = 2
+                                elseif strcmp(Snm, "Spark") == 0 then
+                                    ivo = 3
+                                elseif strcmp(Snm, "Pulse") == 0 then
+                                    ivo = 4
+                                endif
+                            endif
+                        endif
+                    endif
+                endif
+                incount = 0
+                imore = 1
+                while imore == 1 do
+                    icont = 1
+                    while ipos < iln && icont == 1 do
+                        ic = strchar(Sline, ipos)
+                        if ic == 32 || ic == 9 || ic == 13 then
+                            ipos += 1
+                        else
+                            icont = 0
+                        endif
+                    od
+                    imore = 0
+                    if ipos < iln && incount < 8 then
+                        ic = strchar(Sline, ipos)
+                        if (ic >= 48 && ic <= 57) || ic == 46 || ic == 45 || ic == 43 then
+                            in0 = ipos
+                            icontn = 1
+                            while ipos < iln && icontn == 1 do
+                                ic = strchar(Sline, ipos)
+                                if (ic >= 48 && ic <= 57) || ic == 46 || ic == 45 || ic == 43 || ic == 101 || ic == 69 then
+                                    ipos += 1
+                                else
+                                    icontn = 0
+                                endif
+                            od
+                            invals[incount] = strtod(strsub(Sline, in0, ipos))
+                            incount += 1
+                            imore = 1
+                        endif
+                    endif
+                od
+                if ivo >= 1 && ivo <= 4 && incount >= 1 then
+                    ist = invals[0]
+                    idu = 0.5
+                    iamp = 0.4
+                    ifq = 220
+                    if incount == 2 then
+                        idu = invals[1]
+                    elseif incount == 3 then
+                        idu = invals[1]
+                        ix = invals[2]
+                        if ix > 1 then
+                            ifq = ix
+                        else
+                            iamp = ix
+                        endif
+                    else
+                        idu = invals[1]
+                        iamp = invals[2]
+                        ifq = invals[3]
+                    endif
+                    if iamp > 1 && ifq <= 1 then
+                        isw = iamp
+                        iamp = ifq
+                        ifq = isw
+                    endif
+                    if iamp >= 36 && iamp <= 84 && ifq <= 1 then
+                        ifq = iamp
+                        iamp = 0.4
+                        if incount >= 5 then
+                            if invals[4] > 0 && invals[4] <= 1 then
+                                iamp = invals[4]
+                            endif
+                        endif
+                    endif
+                    if ifq >= 36 && ifq <= 84 then
+                        if abs(ifq - int(ifq + 0.5)) < 0.02 then
+                            ifq = cpsmidinn(ifq)
+                        endif
+                    endif
+                    if iamp > 1 then
+                        iamp = 0.4
+                    endif
+                    if iamp < 0.001 then
+                        iamp = 0.4
+                    endif
+                    if ifq < 20 then
+                        ifq = 110
+                    endif
+                    if idu < 0.02 then
+                        idu = 0.02
+                    endif
+                    ivoice[inev] = ivo
+                    istart[inev] = ist
+                    idur[inev] = idu
+                    iampv[inev] = iamp
+                    ifreqv[inev] = ifq
+                    inev += 1
+                endif
+            endif
+        endif
+    od
+    ioff = 0
+    if inev > 0 then
+        imin = istart[0]
+        imax = istart[0]
+        ix = 1
+        while ix < inev do
+            if istart[ix] < imin then
+                imin = istart[ix]
+            endif
+            if istart[ix] > imax then
+                imax = istart[ix]
+            endif
+            ix += 1
+        od
+        if imax < it0 then
+            ioff = it0 - imin
+        endif
+    endif
+    Sout = ""
+    ix = 0
+    while ix < inev do
+        ist = istart[ix]
+        if ioff != 0 then
+            ist = ist + ioff
+        elseif ist < it0 then
+            ist = ist + it0
+        endif
+        Snm = "Glass"
+        if ivoice[ix] == 2 then
+            Snm = "Pad"
+        elseif ivoice[ix] == 3 then
+            Snm = "Spark"
+        elseif ivoice[ix] == 4 then
+            Snm = "Pulse"
+        endif
+        Sout = strcat(Sout, sprintf("i \"%s\" %.4f %.4f %.4f %.4f\n",
+              Snm, ist, idur[ix], iampv[ix], ifreqv[ix]))
+        ix += 1
+    od
+    prints("ScoreNormSlice [%.0f,%.0f]: %d events, time shift %.2fs\n",
+           it0, it1, inev, ioff)
+    xout Sout
+endop
+
 ; Number sounding instruments first so compiled Glass/Pad/Spark/Pulse
 ; occupy 1-4. Then leftover numeric i1/i2/i3 from the model hit those
 ; voices instead of Compose. modelprompt_orc redefines the
@@ -165,6 +459,7 @@ No comments, markdown, f-statements, or e-statement.
 }}, Spitches, iwin + 1, Sharm1, it0, it1, it0, it1)
         Sslice = modelprompt(gSProvider, gSModel, Sprompt1)
         prints("Section I slice %d (%.0f-%.0f):\n%s\n", iwin + 1, it0, it1, Sslice)
+        Sslice = ScoreNormSlice(Sslice, it0, it1)
         Sscore1 = strcat(Sscore1, Sslice)
         Sscore1 = strcat(Sscore1, "\n")
         iwin += 1
@@ -180,10 +475,10 @@ No comments, markdown, f-statements, or e-statement.
         it1 = it0 + 20
         Sharm2 = "Remain in E MINOR. Use only the E minor MIDI set (include F#, no F natural)."
         if iwin == 0 then
-            Sharm2 = {{RESOLVE the modulation into E minor at the opening (the previous slice prepared V of E). Cadence or settle on E-G-B, then use ONLY the E minor set for the rest of this window.}}
+            Sharm2 = {{RESOLVE into E minor (E-G-B), then stay in E minor. First lines MUST look like: i "Pad" 80.00 12 0.05 164.81 / i "Spark" 80.25 0.12 0.14 329.63. Every p2 is in [80, 100). Forbidden: p2=0, p2=8, MIDI numbers in p4 or p5.}}
         endif
         if iwin == 3 then
-            Sharm2 = {{PREPARE the return to the TONIC (do not fully resolve yet). Start in E minor, then reintroduce tonic-set pitches and the tonic's dominant. End hanging so the tonic can cadence at 160 s.}}
+            Sharm2 = {{PREPARE the return to the TONIC (do not cadence yet). First lines MUST look like: i "Pad" 140.00 12 0.05 164.81 / i "Spark" 140.25 0.12 0.14 329.63. Every p2 is in [140, 160). Forbidden: p2=8, p4=50, p5=0.35.}}
         endif
         Sprompt2 = sprintf({{
 Write a second-section slice as valid Csound i-statements.
@@ -225,6 +520,7 @@ Constraints:
 }}, Spitches, iwin + 1, Sharm2, it0, it1, it0 + 0.25, it0, it1, it0, it1, it1)
         Sslice = modelprompt(gSProvider, gSModel, Sprompt2)
         prints("Section II slice %d (%.0f-%.0f):\n%s\n", iwin + 1, it0, it1, Sslice)
+        Sslice = ScoreNormSlice(Sslice, it0, it1)
         Sscore2 = strcat(Sscore2, Sslice)
         Sscore2 = strcat(Sscore2, "\n")
         iwin += 1
@@ -240,7 +536,7 @@ Constraints:
         it1 = it0 + 20
         Sharm3 = "Remain in the TONIC. Use only the tonic MIDI set."
         if iwin == 0 then
-            Sharm3 = {{RESOLVE the return to the TONIC at the opening (the previous slice prepared the dominant). Cadence or settle in the tonic set, then stay there. Pulse in the bass of the tonic. Do not remain in E minor.}}
+            Sharm3 = {{RESOLVE to the TONIC. Pulse in tonic bass. First lines MUST look like: i "Pulse" 160.25 0.8 0.18 146.83 / i "Pad" 160.00 12 0.05 146.83. Every p2 is in [160, 180). Forbidden: p2=60, p4=110, p5=0.35.}}
         endif
         Sprompt3 = sprintf({{
 Write a third-section slice as valid Csound i-statements.
@@ -292,6 +588,7 @@ Constraints:
 }}, Spitches, iwin + 1, Sharm3, it0, it1, it0 + 0.25, it0, it1, it0, it1, it1)
         Sslice = modelprompt(gSProvider, gSModel, Sprompt3)
         prints("Section III slice %d (%.0f-%.0f):\n%s\n", iwin + 1, it0, it1, Sslice)
+        Sslice = ScoreNormSlice(Sslice, it0, it1)
         Sscore3 = strcat(Sscore3, Sslice)
         Sscore3 = strcat(Sscore3, "\n")
         iwin += 1
@@ -306,8 +603,8 @@ tweaks to frequencies, bandwidths, delay time, or wet mixes. Do not invent
 new opcodes. Do not use mode. Do not use outs. No markdown or commentary.
 Keep every PrintPfields line. Do not remove prints or nstrstr.
 Pulse MUST be a gated square-wave (vco2 mode 2) an octave down with an lfo
-square gate -- rhythmic on/off, never a slow sine pad. Keep mix Pulse * 0.12.
-Keep these mix scales exactly: Pad * 0.708, Spark * 0.494, Pulse * 0.12,
+square gate -- rhythmic on/off, never a slow sine pad. Keep mix Pulse * 0.038.
+Keep these mix scales exactly: Pad * 0.708, Spark * 0.156, Pulse * 0.038,
 Glass * 0.88. Do not change those constants.
 Keep the Glass chime/wineglass design (high-Q bar modes, long expon ring).
 Do not revert Glass to eight loud clangorous partials.
@@ -361,7 +658,7 @@ instr Spark
   acar oscili 0.7, ifreq + amod
   aclick mpulse 1, 0
   aclick = reson(aclick, ifreq * 6.0, ifreq * 0.4, 2) * 0.15
-  asig = (acar + aclick) * aenv * 0.494
+  asig = (acar + aclick) * aenv * 0.156
   aL = asig * 0.85
   aR = asig * 1.0
   outleta "leftout", aL
@@ -378,7 +675,7 @@ instr Pulse
   afilt butterlp apulse, ifreq * 2.8
   kgate lfo 0.5, 2.7, 3
   agate = 0.08 + (0.5 + kgate) * 0.92
-  asig = afilt * aenv * agate * 0.12
+  asig = afilt * aenv * agate * 0.038
   outleta "leftout", asig * 0.90
   outleta "rightout", asig * 1.10
 endin
@@ -443,9 +740,9 @@ alwayson "Master"
 
     prints("Compiled orchestra:\n%s\n", Sorc)
 
-    scorelinei(Sscore1)
-    scorelinei(Sscore2)
-    scorelinei(Sscore3)
+    scorelinei(ScoreNoComments(Sscore1))
+    scorelinei(ScoreNoComments(Sscore2))
+    scorelinei(ScoreNoComments(Sscore3))
     prints("All three sections are in the score.\n\n")
     event("e", 0, giPerfEnd)
 ComposeSkip:

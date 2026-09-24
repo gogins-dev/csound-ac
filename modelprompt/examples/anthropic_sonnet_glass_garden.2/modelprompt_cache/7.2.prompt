@@ -1,0 +1,9 @@
+
+Write a second-section slice as valid Csound i-statements.
+
+Instruments allowed: Glass, Pad, and Spark.
+Spark is a bright, short metallic attack -- sonically opposite the soft Pad.
+Glass and Pad must CONTINUE throughout this slice (not stop when Spark enters).
+
+TONIC MIDI set:  50.0 62.0 65.0 69.0 72.0 74.0 69.0 76.0
+E MINOR MIDI set (52 59 64 66 

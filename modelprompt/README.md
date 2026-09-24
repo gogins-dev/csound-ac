@@ -256,6 +256,8 @@ Sscore = modelprompt(
 scorelinei(Sscore)
 ```
 
+`scoreline` and `scorelinei` do not treat `;` as a comment. Never send comment lines in real-time score text; they surface as `unknown opcode ;illegal RT scoreline`. Prompt the model for i-statements only, and drop any `;` lines before `scoreline` / `scorelinei`.
+
 This representation is general and can contain ordinary Csound score syntax.
 
 ### Model-generated instrument definitions
