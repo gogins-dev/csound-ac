@@ -439,24 +439,36 @@ No duplicate consecutive values. Return only the JSON array.
         if iwin > 0 then
             Sseg = sprintf("SEGUE from the previous 20 s: no downbeat or reset at %.0f. First Glass onset 1.5 to 4 s after %.0f, not a tutti at the join. Do not start all Pads at %.0f; stagger replacements. Pad durations 12 to 18 so they overlap past %.0f into the next slice. Keep the same bass Hz unless harmony below moves it. Continue the garden; do not begin a new piece.", it0, it0, it0, it1)
         endif
-        Sprompt1 = sprintf({{
+        ; Csound 7 sprintf reallocs a negative size when a long result
+        ; outgrows strlen(fmt)+13*nargs. Numbers only in short sprintf.
+        Sprompt1 = {{
 Write valid Csound i-statements for instruments Glass and Pad only.
 
 TONIC MIDI pitch set (convert each to Hz; write the Hz number, not cpsmidinn):
-%s
+}}
+        Sprompt1 = strcat(Sprompt1, Spitches)
+        Sprompt1 = strcat(Sprompt1, {{
 
 E minor (destination, Hz): 164.81 246.94 329.63 369.99 392.00 440.00 493.88 659.26
 
-This is slice %d of 4 of Section I, absolute time %.0f to %.0f.
-
+}})
+        Stmp = sprintf("This is slice %d of 4 of Section I, absolute time %.0f to %.0f.\n", iwin + 1, it0, it1)
+        Sprompt1 = strcat(Sprompt1, Stmp)
+        Sprompt1 = strcat(Sprompt1, {{
 Harmony for THIS slice:
-%s
+}})
+        Sprompt1 = strcat(Sprompt1, Sharm1)
+        Sprompt1 = strcat(Sprompt1, {{
 
 Join:
-%s
+}})
+        Sprompt1 = strcat(Sprompt1, Sseg)
+        Sprompt1 = strcat(Sprompt1, {{
 
-TIMEBASE: p2 is ABSOLUTE time in [%.0f, %.0f].
-Example: i "Glass" %.2f 0.8 0.42 293.66
+}})
+        Stmp = sprintf("TIMEBASE: p2 is ABSOLUTE time in [%.0f, %.0f].\nExample: i \"Glass\" %.2f 0.8 0.42 293.66\n", it0, it1, it0 + 0.3)
+        Sprompt1 = strcat(Sprompt1, Stmp)
+        Sprompt1 = strcat(Sprompt1, {{
 p4 is amplitude in (0, 1]. p5 is a Hz literal (e.g. 293.66), never MIDI,
 never cpsmidinn() or any expression. Four numbers after the quoted name.
 
@@ -467,7 +479,10 @@ Write PHRASES, not a grid and not an up-down walk of the set:
 - Do not space onsets evenly. Do not list the pitch set in order.
 
 Counts for THIS slice only:
-- Glass: %d to %d chimes, durations 0.5 to 1.8.
+}})
+        Stmp = sprintf("- Glass: %d to %d chimes, durations 0.5 to 1.8.\n", iglo, ighi)
+        Sprompt1 = strcat(Sprompt1, Stmp)
+        Sprompt1 = strcat(Sprompt1, {{
 - Pad: exactly 2 or 3 tones (never more than 3 sounding). Durations 12 to 18
   so they overlap the next slice. One Pad is the BASS of the window.
 - Emit Glass AND Pad.
@@ -478,9 +493,10 @@ Return only i-statements, one per line.
 Each line MUST use a quoted name: i "Glass" start dur amp freq (or i "Pad").
 Never write numeric instruments (i1, i2, i3, ...).
 No comments, markdown, f-statements, or e-statement.
-}}, Spitches, iwin + 1, it0, it1, Sharm1, Sseg, it0, it1, it0 + 0.3, iglo, ighi)
+}})
         Sslice = modelprompt(gSProvider, gSModel, Sprompt1)
-        prints("Section I slice %d (%.0f-%.0f):\n%s\n", iwin + 1, it0, it1, Sslice)
+        prints("Section I slice %d (%.0f-%.0f):\n", iwin + 1, it0, it1)
+        puts(Sslice, 1)
         Sslice = ScoreNormSlice(Sslice, it0, it1)
         Sscore1 = strcat(Sscore1, Sslice)
         Sscore1 = strcat(Sscore1, "\n")
@@ -523,28 +539,38 @@ No comments, markdown, f-statements, or e-statement.
         endif
         Sseg = sprintf("SEGUE: no downbeat at %.0f. First Spark/Glass 1.5 to 4 s after %.0f, not a tutti. Stagger Pads; durations 12 to 18 to overlap %.0f. Keep bass E unless harmony below moves it. Glass continues from the previous slice.", it0, it0, it1)
         if iwin == 0 then
-            Sseg = sprintf("SEGUE from Section I: no hard cut at 80. Glass continues. Spark enters 2 to 5 s after 80, not a pile-up at 80.0. Pad bass may move to E (164.81) as a continuation, not a new chorale. Pad durations 12 to 18 overlapping 100.")
+            Sseg = "SEGUE from Section I: no hard cut at 80. Glass continues. Spark enters 2 to 5 s after 80, not a pile-up at 80.0. Pad bass may move to E (164.81) as a continuation, not a new chorale. Pad durations 12 to 18 overlapping 100."
         endif
-        Sprompt2 = sprintf({{
+        Sprompt2 = {{
 Write a second-section slice as valid Csound i-statements.
 
 Instruments allowed: Glass, Pad, and Spark.
 Spark is a brass finger-cymbal / wind-chime -- pitched, ringing -- not a grid of ticks.
 Glass and Pad CONTINUE (do not stop when Spark enters).
 
-TONIC MIDI set: %s
+TONIC MIDI set: }}
+        Sprompt2 = strcat(Sprompt2, Spitches)
+        Sprompt2 = strcat(Sprompt2, {{
 E MINOR Hz (52 59 64 66 67 69 71 76 as 164.81 246.94 329.63 369.99 392.00 440.00 493.88 659.26).
 
-This is slice %d of 4 of Section II, absolute time %.0f to %.0f.
-
+}})
+        Stmp = sprintf("This is slice %d of 4 of Section II, absolute time %.0f to %.0f.\n", iwin + 1, it0, it1)
+        Sprompt2 = strcat(Sprompt2, Stmp)
+        Sprompt2 = strcat(Sprompt2, {{
 Harmony for THIS slice:
-%s
+}})
+        Sprompt2 = strcat(Sprompt2, Sharm2)
+        Sprompt2 = strcat(Sprompt2, {{
 
 Join:
-%s
+}})
+        Sprompt2 = strcat(Sprompt2, Sseg)
+        Sprompt2 = strcat(Sprompt2, {{
 
-TIMEBASE: p2 is ABSOLUTE performance time in [%.0f, %.0f].
-Example first event: i "Spark" %.2f 0.14 0.16 329.63
+}})
+        Stmp = sprintf("TIMEBASE: p2 is ABSOLUTE performance time in [%.0f, %.0f].\nExample first event: i \"Spark\" %.2f 0.14 0.16 329.63\n", it0, it1, it0 + 0.25)
+        Sprompt2 = strcat(Sprompt2, Stmp)
+        Sprompt2 = strcat(Sprompt2, {{
 i "Glass" 0.0 ... is WRONG (that plays at the start of the piece).
 p4 is amplitude in (0, 1], never MIDI 50-76. p5 is Hz >= 40, never 0.35.
 p5 is a numeric Hz literal, never a MIDI key and never cpsmidinn().
@@ -555,22 +581,29 @@ Rhythm -- groups, not a rate:
 - Never a constant spacing. Never walk the eight E-minor pitches in order.
 
 Counts for THIS slice only:
-- Spark: %d to %d notes, durations 0.08 to 0.35.
-- Glass: %d to %d chimes in short phrases (not a scale run), durations 0.5 to 1.8.
+}})
+        Stmp = sprintf("- Spark: %d to %d notes, durations 0.08 to 0.35.\n", islo, ishi)
+        Sprompt2 = strcat(Sprompt2, Stmp)
+        Stmp = sprintf("- Glass: %d to %d chimes in short phrases (not a scale run), durations 0.5 to 1.8.\n", iglo, ighi)
+        Sprompt2 = strcat(Sprompt2, Stmp)
+        Sprompt2 = strcat(Sprompt2, {{
 - Pad: exactly 2 or 3 tones (never more than 3 sounding). Durations 12 to 18
   so they overlap the next slice. One Pad is the BASS.
 - Emit Spark, Glass, AND Pad.
 
 p4: Spark 0.10-0.20, Glass 0.18-0.32, Pad 0.035-0.071.
-Notes may ring a little past %.0f.
-
+}})
+        Stmp = sprintf("Notes may ring a little past %.0f.\n", it1)
+        Sprompt2 = strcat(Sprompt2, Stmp)
+        Sprompt2 = strcat(Sprompt2, {{
 Return only i-statements, one per line.
 Each line MUST use a quoted name: i "Spark" start dur amp freq
 (or i "Glass" / i "Pad"). Never write numeric instruments (i1, i2, i3, ...).
 No comments, markdown, f-statements, or e-statement.
-}}, Spitches, iwin + 1, it0, it1, Sharm2, Sseg, it0, it1, it0 + 0.25, islo, ishi, iglo, ighi, it1)
+}})
         Sslice = modelprompt(gSProvider, gSModel, Sprompt2)
-        prints("Section II slice %d (%.0f-%.0f):\n%s\n", iwin + 1, it0, it1, Sslice)
+        prints("Section II slice %d (%.0f-%.0f):\n", iwin + 1, it0, it1)
+        puts(Sslice, 1)
         Sslice = ScoreNormSlice(Sslice, it0, it1)
         Sscore2 = strcat(Sscore2, Sslice)
         Sscore2 = strcat(Sscore2, "\n")
@@ -630,7 +663,7 @@ No comments, markdown, f-statements, or e-statement.
         if iwin == 3 then
             Sseg = "CLOSE: thin out; do not start a new tutti at 220. Isolated events, overlapping Pads from the previous slice."
         endif
-        Sprompt3 = sprintf({{
+        Sprompt3 = {{
 Write a third-section slice as valid Csound i-statements.
 
 Instruments allowed: Glass, Pad, Spark, and Pulse.
@@ -638,19 +671,29 @@ Pulse is a gated square-wave (octave down) -- a heartbeat/clock, not a pad.
 Layer Pulse under continuing Glass/Pad; Spark may thin or vanish in later slices.
 
 TONIC MIDI set (write Hz literals, not cpsmidinn):
-%s
+}}
+        Sprompt3 = strcat(Sprompt3, Spitches)
+        Sprompt3 = strcat(Sprompt3, {{
 E minor Hz (leaving this key): 164.81 246.94 329.63 369.99 392.00 440.00 493.88 659.26
 
-This is slice %d of 4 of Section III, absolute time %.0f to %.0f.
-
+}})
+        Stmp = sprintf("This is slice %d of 4 of Section III, absolute time %.0f to %.0f.\n", iwin + 1, it0, it1)
+        Sprompt3 = strcat(Sprompt3, Stmp)
+        Sprompt3 = strcat(Sprompt3, {{
 Harmony for THIS slice:
-%s
+}})
+        Sprompt3 = strcat(Sprompt3, Sharm3)
+        Sprompt3 = strcat(Sprompt3, {{
 
 Join:
-%s
+}})
+        Sprompt3 = strcat(Sprompt3, Sseg)
+        Sprompt3 = strcat(Sprompt3, {{
 
-TIMEBASE: p2 is ABSOLUTE performance time in [%.0f, %.0f].
-Example first event: i "Pulse" %.2f 0.8 0.18 146.83
+}})
+        Stmp = sprintf("TIMEBASE: p2 is ABSOLUTE performance time in [%.0f, %.0f].\nExample first event: i \"Pulse\" %.2f 0.8 0.18 146.83\n", it0, it1, it0 + 0.25)
+        Sprompt3 = strcat(Sprompt3, Stmp)
+        Sprompt3 = strcat(Sprompt3, {{
 i "Pulse" 0.0 ... or i "Pad" 60 ... is WRONG for this window.
 p4 is amplitude in (0, 1], never MIDI. p5 is Hz >= 40, never 0.35.
 p5 is a numeric Hz literal, never MIDI, never cpsmidinn().
@@ -661,25 +704,33 @@ Rhythm -- not an even grid:
 - Do not space Pulse every 0.8 to 1.1 s evenly. Do not walk the pitch set in order.
 
 Counts for THIS slice only:
-- Pulse: %d to %d notes, durations 0.5 to 2. If this is the close, keep them
-  in the bass with holes.
-- Spark: %d to %d (zero is allowed if the range includes 0).
-- Glass: %d to %d chimes as phrases or isolated tolls, not a scale run.
-- Pad: at most %d tones sounding (1 to 3). Durations 12 to 18 to overlap.
+}})
+        Stmp = sprintf("- Pulse: %d to %d notes, durations 0.5 to 2. If this is the close, keep them\n  in the bass with holes.\n", iplo, iphi)
+        Sprompt3 = strcat(Sprompt3, Stmp)
+        Stmp = sprintf("- Spark: %d to %d (zero is allowed if the range includes 0).\n", islo, ishi)
+        Sprompt3 = strcat(Sprompt3, Stmp)
+        Stmp = sprintf("- Glass: %d to %d chimes as phrases or isolated tolls, not a scale run.\n", iglo, ighi)
+        Sprompt3 = strcat(Sprompt3, Stmp)
+        Stmp = sprintf("- Pad: at most %d tones sounding (1 to 3). Durations 12 to 18 to overlap.\n", ipadn)
+        Sprompt3 = strcat(Sprompt3, Stmp)
+        Sprompt3 = strcat(Sprompt3, {{
   One Pad is the BASS.
 - Do not emit a full inventory if the counts above are small.
 
 p4: Pulse 0.14-0.24, Spark 0.08-0.16, Glass 0.18-0.32, Pad 0.035-0.071.
-Notes may ring a little past %.0f; the piece rings to ~240.
-
+}})
+        Stmp = sprintf("Notes may ring a little past %.0f; the piece rings to ~240.\n", it1)
+        Sprompt3 = strcat(Sprompt3, Stmp)
+        Sprompt3 = strcat(Sprompt3, {{
 Return only i-statements, one per line.
 Each line MUST use a quoted name: i "Pulse" start dur amp freq
 (or i "Spark" / i "Glass" / i "Pad"). Never write numeric instruments
 (i1, i2, i3, ...).
 No comments, markdown, f-statements, or e-statement.
-}}, Spitches, iwin + 1, it0, it1, Sharm3, Sseg, it0, it1, it0 + 0.25, iplo, iphi, islo, ishi, iglo, ighi, ipadn, it1)
+}})
         Sslice = modelprompt(gSProvider, gSModel, Sprompt3)
-        prints("Section III slice %d (%.0f-%.0f):\n%s\n", iwin + 1, it0, it1, Sslice)
+        prints("Section III slice %d (%.0f-%.0f):\n", iwin + 1, it0, it1)
+        puts(Sslice, 1)
         Sslice = ScoreNormSlice(Sslice, it0, it1)
         Sscore3 = strcat(Sscore3, Sslice)
         Sscore3 = strcat(Sscore3, "\n")
@@ -851,7 +902,8 @@ alwayson "Reverb"
 alwayson "Master"
 }})
 
-    prints("Compiled orchestra:\n%s\n", Sorc)
+    prints("Compiled orchestra:\n")
+    puts(Sorc, 1)
 
     scorelinei(ScoreNoComments(Sscore1))
     scorelinei(ScoreNoComments(Sscore2))
