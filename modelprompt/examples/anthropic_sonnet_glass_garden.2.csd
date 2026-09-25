@@ -615,6 +615,7 @@ Do not center Glass or Spark.
 Connect Pulse to Reverb (not Echo) so the gate stays articulated.
 Keep Echo feedback high (ifb 0.82 or above). Delayed repeats must fade slowly
 so textures accumulate over the four-minute form. Do not lower ifb below 0.75.
+Echo must delay each side independently (no cross-feedback, no ping-pong).
 Keep Master's kfade linseg that holds until 268 s then fades to 0 over 17 s.
 Keep Pad and Pulse kgain from times: full level through 80 s, 10 dB down
 (multiply 0.316) from 90-180 s, restored by 200 s. Do not apply kgain to Glass or Spark.
@@ -701,17 +702,16 @@ instr Pulse
 endin
 
 instr Echo
-  ; Stereo feedback delay. High feedback so repeats fade slowly and stack.
+  ; Stereo delay, each side feeds itself. Not ping-pong.
   PrintPfields
   aL inleta "leftin"
   aR inleta "rightin"
-  idel = 0.36
   ifb = 0.82
   iwet = 0.52
   aLfb init 0
   aRfb init 0
-  aLfb delay aL + aRfb * ifb, idel
-  aRfb delay aR + aLfb * ifb, idel
+  aLfb delay aL + aLfb * ifb, 0.36
+  aRfb delay aR + aRfb * ifb, 0.41
   aOutL = aL * (1 - iwet) + aLfb * iwet
   aOutR = aR * (1 - iwet) + aRfb * iwet
   outleta "leftout", aOutL
