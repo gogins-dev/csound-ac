@@ -1,0 +1,29 @@
+instr Tone
+ainit init 0
+aenv linen p4, 0.05, p3, 0.05
+asig oscili aenv, p5
+outleta "leftout", asig
+outleta "rightout", asig
+endin
+
+instr Reverb
+ainL inleta "leftin"
+ainR inleta "rightin"
+aoutL, aoutR reverbsc ainL, ainR, 0.7, 12000
+outleta "leftout", aoutL
+outleta "rightout", aoutR
+endin
+
+instr Master
+ainL inleta "leftin"
+ainR inleta "rightin"
+outc ainL, ainR
+endin
+
+connect "Tone", "leftout", "Reverb", "leftin"
+connect "Tone", "rightout", "Reverb", "rightin"
+connect "Reverb", "leftout", "Master", "leftin"
+connect "Reverb", "rightout", "Master", "rightin"
+
+alwayson "Reverb"
+alwayson "Master"

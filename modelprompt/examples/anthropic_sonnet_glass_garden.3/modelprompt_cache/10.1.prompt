@@ -1,0 +1,9 @@
+
+Write a second-section slice as valid Csound i-statements.
+
+Instruments allowed: Glass, Pad, and Spark.
+Spark is a brass finger-cymbal / wind-chime -- pitched, ringing -- not a grid of ticks.
+Glass and Pad CONTINUE (do not stop when Spark enters).
+
+TONIC MIDI set:  50.0 62.0 65.0 69.0 74.0 71.0 67.0 62.0
+E MINOR Hz (52 59 64 66 67 69 71 76 as 164.81 246.94 329.

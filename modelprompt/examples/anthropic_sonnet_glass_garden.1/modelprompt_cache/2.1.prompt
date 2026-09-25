@@ -1,0 +1,5 @@
+
+Return exactly 8 MIDI key numbers as a JSON array of numbers.
+Use a quiet, luminous mode somewhere between D Dorian and A Aeolian,
+centered around MIDI 60 to 76, with one or two notes below 60 for
+bass color. No duplicate consecutive values. Return only the JSON array.

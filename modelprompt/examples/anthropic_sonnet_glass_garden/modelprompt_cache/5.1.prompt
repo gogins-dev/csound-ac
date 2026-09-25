@@ -1,0 +1,25 @@
+
+Write a third section as valid Csound i-statements.
+
+Instruments allowed: Glass, Pad, Spark, and Pulse.
+Pulse is a dark, gated low-mid pulse — sonically opposite bright Spark.
+Glass, Pad, and Spark must CONTINUE throughout this section (layered under Pulse).
+
+Reuse this MIDI pitch set (convert to Hz with cpsmidinn):
+ 50.0 53.0 55.0 57.0 59.0 62.0 65.0 69.0 72.0 60.0 64.0 67.0 71.0 74.0 62.0 76.0 71.0 64.0
+
+Constraints:
+- Absolute onset times from 22 to 34 seconds.
+- Pulse is the new lead at double the prior Pulse tempo: about 28 to 40 Pulse
+  notes, durations 0.03 to 0.11, with roughly half the inter-onset spacing of
+  a moderate motoric pulse (very tight successive onsets).
+- Prefer lower members of the pitch set for Pulse (bass / tenor).
+- Continuity (required):
+  - Pad: 3 to 4 overlapping long tones covering 22–34 (durations 4–8).
+  - Glass: about 8 to 12 chimes spread across the window.
+  - Spark: about 10 to 16 accents continuing (slightly less dense than Section II).
+- p4 Pulse 0.04–0.10 (+6 dB vs the previous soft bed).
+- p4 others: Spark 0.08–0.16, Glass 0.18–0.32, Pad 0.05–0.10.
+- p5 in Hz. Last onset by time 34; piece may ring to ~36.
+- Return only i-statements, one per line.
+- No comments, markdown, f-statements, or e-statement.

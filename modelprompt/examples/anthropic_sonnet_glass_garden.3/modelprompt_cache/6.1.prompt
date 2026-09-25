@@ -1,0 +1,12 @@
+
+Write valid Csound i-statements for instruments Glass and Pad only.
+
+TONIC MIDI pitch set (convert each to Hz; write the Hz number, not cpsmidinn):
+ 50.0 62.0 65.0 69.0 74.0 71.0 67.0 62.0
+
+E minor (destination, Hz): 164.81 246.94 329.63 369.99 392.00 440.00 493.88 659.26
+
+This is slice 4 of 4 of Section I, absolute time 60 to 80.
+
+Harmony for THIS slice:
+PREPARE E minor, do not cadence in E. Start in the tonic. Bass Pad moves to B (246.94 Hz) or B under tonic. Introduce F# (369.99 Hz). End hanging on B (246.94 or 493.88) or F# so E can resolve at 80 s. Mix tonic pitches with E-minor 164.81 246.94 329.63 369.99 392.00 440.00 493.

@@ -1,0 +1,111 @@
+instr Glass
+  iamp = p4
+  ifreq = p5
+  aenv linen iamp, 0.005, p3, p3 * 0.35
+  aexc mpulse 1, 0
+  a1 reson aexc, ifreq * 1.000, ifreq * 0.008, 2
+  a2 reson aexc, ifreq * 2.756, ifreq * 0.012, 2
+  a3 reson aexc, ifreq * 5.404, ifreq * 0.018, 2
+  a4 reson aexc, ifreq * 8.933, ifreq * 0.025, 2
+  a5 reson aexc, ifreq * 13.34, ifreq * 0.035, 2
+  a6 reson aexc, ifreq * 18.64, ifreq * 0.045, 2
+  a7 reson aexc, ifreq * 24.82, ifreq * 0.055, 2
+  a8 reson aexc, ifreq * 31.87, ifreq * 0.070, 2
+  asig = (a1 + a2*0.9 + a3*0.75 + a4*0.55 + a5*0.4 + a6*0.28 + a7*0.18 + a8*0.12) * aenv * 0.28
+  outleta "leftout", asig
+  outleta "rightout", asig
+endin
+
+instr Pad
+  iamp = p4
+  ifreq = p5
+  aenv linen iamp, p3 * 0.35, p3, p3 * 0.35
+  a1 oscili 0.45, ifreq * 0.997
+  a2 oscili 0.45, ifreq * 1.003
+  a3 oscili 0.25, ifreq * 2.001
+  aL = (a1 + a3) * aenv
+  aR = (a2 + a3) * aenv
+  outleta "leftout", aL
+  outleta "rightout", aR
+endin
+
+instr Spark
+  ; Bright, short metallic contrast to Pad (FM-ish + noise tick).
+  iamp = p4
+  ifreq = p5
+  aenv expon iamp, p3, iamp * 0.001
+  amod oscili ifreq * 2.7, ifreq * 5.13
+  acar oscili 0.7, ifreq + amod
+  aclick mpulse 1, 0
+  aclick = reson(aclick, ifreq * 6.0, ifreq * 0.4, 2) * 0.15
+  asig = (acar + aclick) * aenv * 0.35
+  aL = asig * 0.85
+  aR = asig * 1.0
+  outleta "leftout", aL
+  outleta "rightout", aR
+endin
+
+instr Pulse
+  ; Dark gated pulse contrast to Spark (low buzz + bandpass). Soft, goes via Echo.
+  iamp = p4
+  ifreq = p5
+  aenv linen iamp, p3 * 0.3, p3, p3 * 0.3
+  abuzz vco2 0.28, ifreq, 2, 0.35
+  afilt resonz abuzz, ifreq * 1.5, ifreq * 0.35
+  asig = (abuzz * 0.35 + afilt * 0.65) * aenv * 0.10
+  outleta "leftout", asig * 0.95
+  outleta "rightout", asig * 1.05
+endin
+
+instr Echo
+  ; Stereo feedback delay. Mix into named outs (avoid inline outleta exprs).
+  aL inleta "leftin"
+  aR inleta "rightin"
+  idel = 0.28
+  ifb = 0.32
+  iwet = 0.3
+  aLfb init 0
+  aRfb init 0
+  aLfb delay aL + aLfb * ifb, idel
+  aRfb delay aR + aRfb * ifb, idel
+  aOutL = aL * (1 - iwet) + aLfb * iwet
+  aOutR = aR * (1 - iwet) + aRfb * iwet
+  outleta "leftout", aOutL
+  outleta "rightout", aOutR
+endin
+
+instr Reverb
+  ; Do not name reverb signals aX — that identifier breaks the right outleta path.
+  aL inleta "leftin"
+  aR inleta "rightin"
+  aRevL, aRevR reverbsc aL, aR, 0.78, 12000
+  iwet = 0.35
+  aOutL = aL * (1 - iwet) + aRevL * iwet
+  aOutR = aR * (1 - iwet) + aRevR * iwet
+  outleta "leftout", aOutL
+  outleta "rightout", aOutR
+endin
+
+instr Master
+  aL inleta "leftin"
+  aR inleta "rightin"
+  aOutL = tanh(aL * 2.9)
+  aOutR = tanh(aR * 2.9)
+  outc aOutL, aOutR
+endin
+
+connect "Glass", "leftout", "Echo", "leftin"
+connect "Glass", "rightout", "Echo", "rightin"
+connect "Spark", "leftout", "Echo", "leftin"
+connect "Spark", "rightout", "Echo", "rightin"
+connect "Pulse", "leftout", "Echo", "leftin"
+connect "Pulse", "rightout", "Echo", "rightin"
+connect "Pad", "leftout", "Reverb", "leftin"
+connect "Pad", "rightout", "Reverb", "rightin"
+connect "Echo", "leftout", "Reverb", "leftin"
+connect "Echo", "rightout", "Reverb", "rightin"
+connect "Reverb", "leftout", "Master", "leftin"
+connect "Reverb", "rightout", "Master", "rightin"
+alwayson "Echo"
+alwayson "Reverb"
+alwayson "Master"

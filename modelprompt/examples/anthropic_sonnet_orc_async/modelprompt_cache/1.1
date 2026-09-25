@@ -1,0 +1,31 @@
+instr Tone
+  iamp = p4
+  ifreq = p5
+  aenv linen iamp, 0.01, p3, 0.05
+  asig oscili aenv, ifreq
+  outleta "leftout", asig
+  outleta "rightout", asig
+endin
+
+instr Reverb
+  aL inleta "leftin"
+  aR inleta "rightin"
+  awL, awR reverbsc aL, aR, 0.85, 12000
+  aoutL = aL*0.65 + awL*0.35
+  aoutR = aR*0.65 + awR*0.35
+  outleta "leftout", aoutL
+  outleta "rightout", aoutR
+endin
+
+instr Master
+  aL inleta "leftin"
+  aR inleta "rightin"
+  outc aL, aR
+endin
+
+connect "Tone", "leftout", "Reverb", "leftin"
+connect "Tone", "rightout", "Reverb", "rightin"
+connect "Reverb", "leftout", "Master", "leftin"
+connect "Reverb", "rightout", "Master", "rightin"
+alwayson "Reverb"
+alwayson "Master"

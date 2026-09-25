@@ -1,0 +1,43 @@
+
+Write a third-section slice as valid Csound i-statements.
+
+Instruments allowed: Glass, Pad, Spark, and Pulse.
+Pulse is a gated square-wave (octave down) -- a heartbeat/clock, not a pad.
+Layer Pulse under continuing Glass/Pad; Spark may thin or vanish in later slices.
+
+TONIC MIDI set (write Hz literals, not cpsmidinn):
+ 50.0 62.0 65.0 69.0 74.0 71.0 67.0 62.0
+E minor Hz (leaving this key): 164.81 246.94 329.63 369.99 392.00 440.00 493.88 659.26
+
+This is slice 3 of 4 of Section III, absolute time 200 to 220.
+
+Harmony for THIS slice:
+TONIC. Bass lowest tonic as Hz. Pulse at half-time (slower, more space). Spark sparse. Glass more isolated.
+
+TIMEBASE: p2 is ABSOLUTE performance time in [200, 220].
+Example first event: i "Pulse" 200.25 0.8 0.18 146.83
+i "Pulse" 0.0 ... or i "Pad" 60 ... is WRONG for this window.
+p4 is amplitude in (0, 1], never MIDI. p5 is Hz >= 40, never 0.35.
+p5 is a numeric Hz literal, never MIDI, never cpsmidinn().
+Four numbers after the name. No comment lines.
+
+Rhythm -- not an even grid:
+- Pulse as long-short pairs (clave/heartbeat), then a gap. Prefer bass pitches.
+- Do not space Pulse every 0.8 to 1.1 s evenly. Do not walk the pitch set in order.
+
+Counts for THIS slice only:
+- Pulse: 8 to 12 notes, durations 0.5 to 2. If the count range starts at 6 and
+  this is the close, keep them in the bass with holes.
+- Spark: 4 to 8 (zero is allowed if the range includes 0).
+- Glass: 6 to 10 chimes as phrases or isolated tolls, not a scale run.
+- Pad: at most 2 tones sounding (1 to 3). One Pad is the BASS.
+- Do not emit a full inventory if the counts above are small.
+
+p4: Pulse 0.14-0.24, Spark 0.08-0.16, Glass 0.18-0.32, Pad 0.035-0.071.
+Notes may ring a little past 220; the piece rings to ~240.
+
+Return only i-statements, one per line.
+Each line MUST use a quoted name: i "Pulse" start dur amp freq
+(or i "Spark" / i "Glass" / i "Pad"). Never write numeric instruments
+(i1, i2, i3, ...).
+No comments, markdown, f-statements, or e-statement.

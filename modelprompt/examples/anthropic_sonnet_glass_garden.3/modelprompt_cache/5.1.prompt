@@ -1,0 +1,36 @@
+
+Write valid Csound i-statements for instruments Glass and Pad only.
+
+TONIC MIDI pitch set (convert each to Hz; write the Hz number, not cpsmidinn):
+ 50.0 62.0 65.0 69.0 74.0 71.0 67.0 62.0
+
+E minor (destination, Hz): 164.81 246.94 329.63 369.99 392.00 440.00 493.88 659.26
+
+This is slice 3 of 4 of Section I, absolute time 40 to 60.
+
+Harmony for THIS slice:
+TONIC. Bass lowest tonic as Hz. Slightly busier than the previous slice, still phrases and holes.
+
+TIMEBASE: p2 is ABSOLUTE time in [40, 60].
+Example: i "Glass" 40.30 0.8 0.42 293.66
+p4 is amplitude in (0, 1]. p5 is a Hz literal (e.g. 293.66), never MIDI,
+never cpsmidinn() or any expression. Four numbers after the quoted name.
+
+Write PHRASES, not a grid and not an up-down walk of the set:
+- 3 to 5 short Glass phrases, each 2 to 4 notes.
+- Repeat one Glass Hz as a toll (at least 3 times in this window).
+- Leave at least two gaps of 1 to 2 seconds with no Glass onset.
+- Do not space onsets evenly. Do not list the pitch set in order.
+
+Counts for THIS slice only:
+- Glass: 12 to 16 chimes, durations 0.5 to 1.8.
+- Pad: exactly 2 or 3 tones (never more than 3 sounding). Durations 8 to 16.
+  One Pad is the BASS of the window (lowest pitch).
+- Emit Glass AND Pad.
+
+p4: Glass 0.35-0.55, Pad 0.042-0.085.
+
+Return only i-statements, one per line.
+Each line MUST use a quoted name: i "Glass" start dur amp freq (or i "Pad").
+Never write numeric instruments (i1, i2, i3, ...).
+No comments, markdown, f-statements, or e-statement.

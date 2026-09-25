@@ -1,0 +1,39 @@
+
+Write a second-section slice as valid Csound i-statements.
+
+Instruments allowed: Glass, Pad, and Spark.
+Spark is a brass finger-cymbal / wind-chime -- pitched, ringing -- not a grid of ticks.
+Glass and Pad CONTINUE (do not stop when Spark enters).
+
+TONIC MIDI set:  50.0 62.0 65.0 69.0 74.0 71.0 67.0 62.0
+E MINOR Hz (52 59 64 66 67 69 71 76 as 164.81 246.94 329.63 369.99 392.00 440.00 493.88 659.26).
+
+This is slice 2 of 4 of Section II, absolute time 100 to 120.
+
+Harmony for THIS slice:
+Remain in E MINOR. Bass Pad is E (164.81 Hz). Use only E-minor Hz (include F# 369.99, no F natural). Do not walk the eight pitches in order.
+
+TIMEBASE: p2 is ABSOLUTE performance time in [100, 120].
+Example first event: i "Spark" 100.25 0.14 0.16 329.63
+i "Glass" 0.0 ... is WRONG (that plays at the start of the piece).
+p4 is amplitude in (0, 1], never MIDI 50-76. p5 is Hz >= 40, never 0.35.
+p5 is a numeric Hz literal, never a MIDI key and never cpsmidinn().
+Four numbers after the name: i "Name" start dur amp freq. No comment lines.
+
+Rhythm -- groups, not a rate:
+- Spark in groups of 2 or 3 onsets 0.12 to 0.28 s apart, then a gap of 0.8 to 1.8 s.
+- Never a constant spacing. Never walk the eight E-minor pitches in order.
+
+Counts for THIS slice only:
+- Spark: 12 to 18 notes, durations 0.08 to 0.35.
+- Glass: 10 to 14 chimes in short phrases (not a scale run), durations 0.5 to 1.8.
+- Pad: exactly 2 or 3 tones (never more than 3 sounding). One Pad is the BASS.
+- Emit Spark, Glass, AND Pad.
+
+p4: Spark 0.10-0.20, Glass 0.18-0.32, Pad 0.035-0.071.
+Notes may ring a little past 120.
+
+Return only i-statements, one per line.
+Each line MUST use a quoted name: i "Spark" start dur amp freq
+(or i "Glass" / i "Pad"). Never write numeric instruments (i1, i2, i3, ...).
+No comments, markdown, f-statements, or e-statement.

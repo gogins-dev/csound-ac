@@ -1,0 +1,14 @@
+
+Write a third-section slice as valid Csound i-statements.
+
+Instruments allowed: Glass, Pad, Spark, and Pulse.
+Pulse is a gated square-wave (octave down) -- a heartbeat/clock, not a pad.
+Layer Pulse under continuing Glass/Pad; Spark may thin or vanish in later slices.
+
+TONIC MIDI set (write Hz literals, not cpsmidinn):
+ 50.0 62.0 65.0 69.0 74.0 71.0 67.0 62.0
+E minor Hz (leaving this key): 164.81 246.94 329.63 369.99 392.00 440.00 493.88 659.26
+
+This is slice 1 of 4 of Section III, absolute time 160 to 180.
+
+Harmony fo

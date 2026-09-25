@@ -1,0 +1,20 @@
+iamp = p4
+ifr  = p5
+
+aexc  mpulse 1, 0.001
+
+a1 mode aexc, ifr*1.000, 900
+a2 mode aexc, ifr*2.756, 650
+a3 mode aexc, ifr*5.404, 420
+a4 mode aexc, ifr*8.933, 300
+a5 mode aexc, ifr*13.34, 200
+a6 mode aexc, ifr*18.64, 130
+a7 mode aexc, ifr*24.82, 80
+a8 mode aexc, ifr*31.88, 50
+
+amix = a1+a2+a3+a4+a5+a6+a7+a8
+
+aenv linen amix, 0.002, p3, p3*0.85
+asig = aenv * iamp
+
+outc(asig, asig)

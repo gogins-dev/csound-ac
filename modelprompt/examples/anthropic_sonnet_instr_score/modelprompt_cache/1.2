@@ -1,0 +1,22 @@
+iamp = p4
+ifreq = p5
+idur = p3
+
+aexc = mpulse(1, 0.001)
+
+a1 = mode(aexc, ifreq*1.00, 200)
+a2 = mode(aexc, ifreq*1.80, 150)
+a3 = mode(aexc, ifreq*2.40, 120)
+a4 = mode(aexc, ifreq*3.10, 90)
+a5 = mode(aexc, ifreq*3.90, 70)
+a6 = mode(aexc, ifreq*4.70, 50)
+a7 = mode(aexc, ifreq*5.50, 35)
+a8 = mode(aexc, ifreq*6.30, 20)
+
+asum = a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8
+
+aenv = linen(asum, 0.001, idur, idur*0.3)
+
+asig = aenv * iamp
+
+outc(asig, asig)
