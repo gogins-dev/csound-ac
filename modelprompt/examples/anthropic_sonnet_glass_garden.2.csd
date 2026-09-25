@@ -1,6 +1,6 @@
 <CsoundSynthesizer>
 <CsOptions>
--odac -d -m161
+-odac -d -m160
 </CsOptions>
 <CsInstruments>
 
@@ -603,15 +603,21 @@ tweaks to frequencies, bandwidths, delay time, or wet mixes. Do not invent
 new opcodes. Do not use mode. Do not use outs. No markdown or commentary.
 Keep every PrintPfields line. Do not remove prints or nstrstr.
 Pulse MUST be a gated square-wave (vco2 mode 2) an octave down with an lfo
-square gate -- rhythmic on/off, never a slow sine pad. Keep mix Pulse * 0.038.
-Keep these mix scales exactly: Pad * 0.708, Spark * 0.156, Pulse * 0.038,
+square gate -- rhythmic on/off, never a slow sine pad. Keep mix Pulse * 0.00955.
+Keep these mix scales exactly: Pad * 0.178, Spark * 1.76, Pulse * 0.00955,
 Glass * 0.88. Do not change those constants.
 Keep the Glass chime/wineglass design (high-Q bar modes, long expon ring).
 Do not revert Glass to eight loud clangorous partials.
+Keep Spark as pitched brass wind-chimes / finger cymbals: high-Q metal ring
+at p5, long decay (~2 s), mix * 1.76. Do not make Spark bamboo or FM.
+Pan Glass left (left 1, right 0.40) and Spark right (left 0.40, right 1).
+Do not center Glass or Spark.
 Connect Pulse to Reverb (not Echo) so the gate stays articulated.
 Keep Echo feedback high (ifb 0.82 or above). Delayed repeats must fade slowly
 so textures accumulate over the four-minute form. Do not lower ifb below 0.75.
 Keep Master's kfade linseg that holds until 268 s then fades to 0 over 17 s.
+Keep Pad and Pulse kgain from times: full level through 80 s, 10 dB down
+(multiply 0.316) from 90-180 s, restored by 200 s. Do not apply kgain to Glass or Spark.
 instr Glass
   ; Struck wineglass / small chime: inharmonic bar modes, high Q, long ring.
   PrintPfields
@@ -628,8 +634,8 @@ instr Glass
   a5 reson aexc, ifreq * 13.34, ifreq * 0.0110, 2
   aenv expon iamp, p3, iamp * 0.001
   asig = (a1*1.00 + a2*0.48 + a3*0.22 + a4*0.10 + a5*0.05) * aenv * 0.88
-  aL = asig
-  aR delay asig, 0.00023
+  aL = asig * 1.00
+  aR delay asig * 0.40, 0.00023
   outleta "leftout", aL
   outleta "rightout", aR
 endin
@@ -642,25 +648,35 @@ instr Pad
   a1 oscili 0.45, ifreq * 0.997
   a2 oscili 0.45, ifreq * 1.003
   a3 oscili 0.25, ifreq * 2.001
-  aL = (a1 + a3) * aenv * 0.708
-  aR = (a2 + a3) * aenv * 0.708
+  ktime times
+  kdown limit (ktime - 80) / 10, 0, 1
+  kup limit (ktime - 180) / 20, 0, 1
+  kgain = 1 - 0.684 * kdown * (1 - kup)
+  aL = (a1 + a3) * aenv * 0.178 * kgain
+  aR = (a2 + a3) * aenv * 0.178 * kgain
   outleta "leftout", aL
   outleta "rightout", aR
 endin
 
 instr Spark
-  ; Bright, short metallic contrast to Pad (FM-ish + noise tick).
+  ; Brass wind-chime / finger cymbal: pitched at p5, high Q, long metal ring.
   PrintPfields
   iamp = p4
   ifreq = p5
-  aenv expon iamp, p3, iamp * 0.001
-  amod oscili ifreq * 2.7, ifreq * 5.13
-  acar oscili 0.7, ifreq + amod
-  aclick mpulse 1, 0
-  aclick = reson(aclick, ifreq * 6.0, ifreq * 0.4, 2) * 0.15
-  asig = (acar + aclick) * aenv * 0.156
-  aL = asig * 0.85
-  aR = asig * 1.0
+  iring = 2.2
+  if p3 > iring then
+    iring = p3
+  endif
+  aexc mpulse 1, 0
+  a1 reson aexc, ifreq * 1.000, ifreq * 0.0007, 2
+  a2 reson aexc, ifreq * 2.003, ifreq * 0.0010, 2
+  a3 reson aexc, ifreq * 2.714, ifreq * 0.0015, 2
+  a4 reson aexc, ifreq * 3.011, ifreq * 0.0018, 2
+  a5 reson aexc, ifreq * 4.084, ifreq * 0.0028, 2
+  aenv expon iamp, iring, iamp * 0.001
+  asig = (a1*1.00 + a2*0.90 + a3*0.32 + a4*0.38 + a5*0.18) * aenv * 1.76
+  aL = asig * 0.40
+  aR delay asig * 1.00, 0.00041
   outleta "leftout", aL
   outleta "rightout", aR
 endin
@@ -675,7 +691,11 @@ instr Pulse
   afilt butterlp apulse, ifreq * 2.8
   kgate lfo 0.5, 2.7, 3
   agate = 0.08 + (0.5 + kgate) * 0.92
-  asig = afilt * aenv * agate * 0.038
+  ktime times
+  kdown limit (ktime - 80) / 10, 0, 1
+  kup limit (ktime - 180) / 20, 0, 1
+  kgain = 1 - 0.684 * kdown * (1 - kup)
+  asig = afilt * aenv * agate * 0.00955 * kgain
   outleta "leftout", asig * 0.90
   outleta "rightout", asig * 1.10
 endin
