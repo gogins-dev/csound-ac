@@ -1,0 +1,5 @@
+
+Return exactly 17 MIDI key numbers as a JSON array of numbers.
+Home key: a quiet luminous mode on G Dorian or D Aeolian (NOT A minor).
+Centered around MIDI 48 to 72, with one or two notes below 53 for bass color.
+No duplicate consecutive values. Return only the JSON array.

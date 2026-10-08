@@ -1,0 +1,47 @@
+
+Write a second-section slice as valid Csound i-statements.
+
+Instruments allowed: Glass, Pad, and Spark.
+Spark is a brass finger-cymbal / wind-chime -- pitched, ringing -- not a grid of ticks.
+Glass and Pad CONTINUE (do not stop when Spark enters).
+
+TONIC MIDI set:  46.0 55.0 60.0 62.0 64.0 67.0 65.0 62.0 60.0 58.0 57.0 55.0 53.0 55.0 60.0 64.0 67.0
+A MINOR Hz (45 52 57 59 60 62 64 69 as 110.00 164.81 220.00 246.94 261.63 293.66 329.63 440.00).
+
+This is slice 1 of 4 of Section II, absolute time 53.3 to 66.7.
+
+Harmony for THIS slice:
+RESOLVE into A minor at the opening (cadence or settle on A-C-E). Bass Pad is A (110.00 Hz). Then stay in A minor. Spark is only just entering -- a few groups, not a grid. Every p2 in [53.3, 66.7). Forbidden: p2=0, p2=8, MIDI in p4 or p5.
+
+Join:
+SEGUE from Section I: no hard cut at 53.3. Glass continues. Spark enters 1.3 to 3.3 s after 53.3, not a pile-up at 53.3. Pad bass may move to A (110.00) as a continuation, not a new chorale. Pad durations 8 to 12 overlapping 66.7.
+
+TIMEBASE: p2 is ABSOLUTE performance time in [53.3, 66.7].
+Example first event: i "Spark" 53.50 0.09 0.16 220.00
+
+i "Glass" 0.0 ... is WRONG (that plays at the start of the piece).
+p4 is amplitude in (0, 1], never MIDI 36-84. p5 is Hz >= 40, never 0.35.
+p5 is a numeric Hz literal, never a MIDI key and never cpsmidinn().
+Four numbers after the name: i "Name" start dur amp freq. No comment lines.
+
+Rhythm -- groups, not a rate:
+- Spark in groups of 2 or 3 onsets 0.08 to 0.19 s apart, then a gap of 0.53 to 1.2 s.
+- Never a constant spacing. Never walk the eight A-minor pitches in order.
+- Durations: never copy p3. Consecutive Spark or Glass notes, and any repeated
+  Hz, must be clearly shorter or clearly longer than the previous one.
+
+Counts for THIS slice only:
+- Spark: 6 to 10 notes, durations 0.05 to 0.23.
+- Glass: 8 to 12 chimes in short phrases (not a scale run), durations 0.33 to 1.2.
+
+- Pad: exactly 2 or 3 tones (never more than 3 sounding). Durations 8 to 12
+  so they overlap the next slice. One Pad is the BASS.
+- Emit Spark, Glass, AND Pad.
+
+p4: Spark 0.10-0.20, Glass 0.18-0.32, Pad 0.035-0.071.
+Notes may ring a little past 67.
+
+Return only i-statements, one per line.
+Each line MUST use a quoted name: i "Spark" start dur amp freq
+(or i "Glass" / i "Pad"). Never write numeric instruments (i1, i2, i3, ...).
+No comments, markdown, f-statements, or e-statement.

@@ -752,165 +752,94 @@ No comments, markdown, f-statements, or e-statement.
     ; 6) Orchestra graph last (compile + alwayson FX)
     ; ------------------------------------------------------------------
     Sorc = modelprompt_orc(gSProvider, gSModel, {{
-Return ONLY the following Csound orchestra, with at most small numeric
-tweaks to frequencies, bandwidths, delay time, or wet mixes. Do not invent
-new opcodes. Do not use mode. Do not use outs. No markdown or commentary.
-Keep every PrintPfields line. Do not remove prints or nstrstr.
-Pulse MUST be a gated square-wave (vco2 mode 2) an octave down with an lfo
-square gate -- rhythmic on/off, never a slow sine pad. Keep mix Pulse * 0.00955.
-Keep these mix scales exactly: Pad * 0.178, Spark * 1.76, Pulse * 0.00955,
-Glass * 0.88. Do not change those constants.
-Keep the Glass chime/wineglass design (high-Q bar modes, long expon ring).
-Do not revert Glass to eight loud clangorous partials.
-Keep Spark as pitched brass wind-chimes / finger cymbals: high-Q metal ring
-at p5, long decay (~2 s), mix * 1.76. Do not make Spark bamboo or FM.
-Pan Glass left (left 1, right 0.40) and Spark right (left 0.40, right 1).
-Do not center Glass or Spark.
-Connect Pulse to Reverb (not Echo) so the gate stays articulated.
-Keep Echo feedback high (ifb 0.82 or above). Delayed repeats must fade slowly
-so textures accumulate over the form. Do not lower ifb below 0.75.
-Echo must delay each side independently (no cross-feedback, no ping-pong).
-Keep Master's kfade linseg that holds until 268/1.5 s then fades to 0 over 17/1.5 s.
-Keep Pad and Pulse kgain from times: full level through 115/1.5 s, 14 dB down
-(multiply 0.20) from 125/1.5-158/1.5 s (middle to about two-thirds), restored by 174/1.5 s.
-Do not apply kgain to Glass or Spark. Opening and close stay at full Pad/Pulse.
-instr Glass
-  ; Struck wineglass / small chime: inharmonic bar modes, high Q, long ring.
-  PrintPfields
-  iamp = p4
-  ifreq = p5
-  aclk expon 1, 0.01, 0.001
-  astrike rand 1
-  aexc mpulse 1, 0
-  aexc = aexc + astrike * aclk * 0.18
-  a1 reson aexc, ifreq * 1.000, ifreq * 0.0016, 2
-  a2 reson aexc, ifreq * 2.756, ifreq * 0.0024, 2
-  a3 reson aexc, ifreq * 5.404, ifreq * 0.0040, 2
-  a4 reson aexc, ifreq * 8.933, ifreq * 0.0065, 2
-  a5 reson aexc, ifreq * 13.34, ifreq * 0.0110, 2
-  aenv expon iamp, p3, iamp * 0.001
-  asig = (a1*1.00 + a2*0.48 + a3*0.22 + a4*0.10 + a5*0.05) * aenv * 0.88
-  aL = asig * 1.00
-  aR delay asig * 0.40, 0.00023
-  outleta "leftout", aL
-  outleta "rightout", aR
-endin
+Write one Csound orchestra fragment. The host already has blank instruments
+named Glass, Pad, Spark, Pulse, Echo, Reverb, and Master. Redefine those
+seven instruments and wire them. Do not add other instruments.
 
-instr Pad
-  PrintPfields
-  iamp = p4
-  ifreq = p5
-  aenv linen iamp, p3 * 0.35, p3, p3 * 0.35
-  a1 oscili 0.45, ifreq * 0.997
-  a2 oscili 0.45, ifreq * 1.003
-  a3 oscili 0.25, ifreq * 2.001
-  ktime times
-  kdown limit (ktime - (115 / 1.5)) / (10 / 1.5), 0, 1
-  kup limit (ktime - (158 / 1.5)) / (16 / 1.5), 0, 1
-  kgain = 1 - 0.80 * kdown * (1 - kup)
-  aL = (a1 + a3) * aenv * 0.178 * kgain
-  aR = (a2 + a3) * aenv * 0.178 * kgain
-  outleta "leftout", aL
-  outleta "rightout", aR
-endin
+Return only instr/endin blocks, connect statements, and alwayson statements.
+No markdown, no commentary, no score, no f-statements.
+The first line of your response must be: instr Glass
+Do not write any statement before the first instr.
 
-instr Spark
-  ; Brass wind-chime / finger cymbal: pitched at p5, high Q, long metal ring.
-  PrintPfields
-  iamp = p4
-  ifreq = p5
-  iring = 2.2
-  if p3 > iring then
-    iring = p3
-  endif
-  aexc mpulse 1, 0
-  a1 reson aexc, ifreq * 1.000, ifreq * 0.0007, 2
-  a2 reson aexc, ifreq * 2.003, ifreq * 0.0010, 2
-  a3 reson aexc, ifreq * 2.714, ifreq * 0.0015, 2
-  a4 reson aexc, ifreq * 3.011, ifreq * 0.0018, 2
-  a5 reson aexc, ifreq * 4.084, ifreq * 0.0028, 2
-  aenv expon iamp, iring, iamp * 0.001
-  asig = (a1*1.00 + a2*0.90 + a3*0.32 + a4*0.38 + a5*0.18) * aenv * 1.76
-  aL = asig * 0.40
-  aR delay asig * 1.00, 0.00041
-  outleta "leftout", aL
-  outleta "rightout", aR
-endin
+Opcodes, exact forms that compile in this Csound:
+- A single click is mpulse with TWO arguments: mpulse 1, 0
+  There is no opcode named impulse. One-argument mpulse does not compile.
+- A square wave is vco2 with FOUR arguments: vco2 kamp, kcps, 2, 0.18
+  The fourth argument is pulse width and must be between 0.01 and 0.99.
+  Three-argument vco2 fails at init.
+- Lowpass is butlp or butterlp. Bandpass resonators are reson with scaling 2.
+- Envelopes are linen, linseg, or expon. Do not invent opcode names.
 
-instr Pulse
-  ; Gated pulse wave an octave down -- a clock, not a pad. Dry into Reverb.
-  PrintPfields
-  iamp = p4
-  ifreq = p5
-  aenv linen iamp, 0.012, p3, 0.05
-  apulse vco2 0.55, ifreq * 0.5, 2, 0.18
-  afilt butterlp apulse, ifreq * 2.8
-  kgate lfo 0.5, 2.7 * 1.5, 3
-  agate = 0.08 + (0.5 + kgate) * 0.92
-  ktime times
-  kdown limit (ktime - (115 / 1.5)) / (10 / 1.5), 0, 1
-  kup limit (ktime - (158 / 1.5)) / (16 / 1.5), 0, 1
-  kgain = 1 - 0.80 * kdown * (1 - kup)
-  asig = afilt * aenv * agate * 0.00955 * kgain
-  outleta "leftout", asig * 0.90
-  outleta "rightout", asig * 1.10
-endin
+Rules for every instrument:
+- The first line inside each instr is exactly: PrintPfields
+- Note instruments read iamp = p4 (amplitude, already 0 to 1) and ifreq = p5 (Hz).
+- Do not call outs. Do not use the mode opcode.
+- Note instruments send stereo with outleta "leftout" and outleta "rightout".
+- Effect instruments read inleta "leftin" and inleta "rightin".
+- Do not name any audio signal aX. That name breaks the right-channel outleta path.
+- Do not call prints or nstrstr yourself; PrintPfields already does that.
 
-instr Echo
-  ; Stereo delay, each side feeds itself. Not ping-pong.
-  PrintPfields
-  aL inleta "leftin"
-  aR inleta "rightin"
-  ifb = 0.82
-  iwet = 0.52
-  aLfb init 0
-  aRfb init 0
-  aLfb delay aL + aLfb * ifb, 0.36
-  aRfb delay aR + aRfb * ifb, 0.41
-  aOutL = aL * (1 - iwet) + aLfb * iwet
-  aOutR = aR * (1 - iwet) + aRfb * iwet
-  outleta "leftout", aOutL
-  outleta "rightout", aOutR
-endin
+Glass -- struck wineglass / small chime, not a clangorous bell.
+Excite with mpulse 1, 0 plus a noise burst that dies in about 10 ms.
+Five reson filters (scaling mode 2), high Q, inharmonic bar partials near
+1.00, 2.76, 5.40, 8.93, and 13.3 times ifreq. Bandwidths are a few tenths
+of a percent of each partial, widening slightly as the partial rises.
+Partials fall off fast (fundamental full, top partial near 0.05).
+Exponential ring over the whole note (p3), down to about 0.001 of iamp.
+Scale the sum by 0.88. Pan left: left channel full level, right channel
+about 0.40 delayed by a fraction of a millisecond. Do not use eight partials.
 
-instr Reverb
-  ; Do not name reverb signals aX -- that identifier breaks the right outleta path.
-  PrintPfields
-  aL inleta "leftin"
-  aR inleta "rightin"
-  aRevL, aRevR reverbsc aL, aR, 0.90, 12000
-  iwet = 0.42
-  aOutL = aL * (1 - iwet) + aRevL * iwet
-  aOutR = aR * (1 - iwet) + aRevR * iwet
-  outleta "leftout", aOutL
-  outleta "rightout", aOutR
-endin
+Pad -- soft detuned chorale, not a bell.
+Three oscillators: just flat of ifreq, just sharp of ifreq, and the octave.
+Linen envelope, attack and release each about 0.35 of p3.
+Send a different oscillator mix to each channel.
+Scale by 0.178.
+Duck only this voice (and Pulse) with a gain from times:
+full level until 115/1.5 seconds, then fall across 10/1.5 seconds so the
+level is multiplied by 0.20 (about 14 dB down) and stays there until
+158/1.5 seconds, then rise across 16/1.5 seconds back to full by 174/1.5.
+Opening and close stay loud. Do not duck Glass or Spark.
 
-instr Master
-  PrintPfields
-  aL inleta "leftin"
-  aR inleta "rightin"
-  kfade linseg 1, 268 / 1.5, 1, 17 / 1.5, 0
-  aOutL = tanh(aL * 4) * kfade
-  aOutR = tanh(aR * 4) * kfade
-  outc aOutL, aOutR
-endin
+Spark -- pitched brass finger-cymbal / wind-chime. Not bamboo. Not FM.
+Excite with mpulse 1, 0 into five high-Q reson filters (scaling mode 2) near ratios
+1.00, 2.00, 2.71, 3.01, and 4.08 times ifreq, very narrow bandwidths,
+a bright cluster (second partial almost as loud as the first).
+Exponential ring of 2.2 seconds, or p3 if p3 is longer, down to 0.001.
+Scale the sum by 1.76.
+Pan right: left channel about 0.40, right channel full, with a fraction
+of a millisecond of delay on the right.
 
-connect "Glass", "leftout", "Echo", "leftin"
-connect "Glass", "rightout", "Echo", "rightin"
-connect "Spark", "leftout", "Echo", "leftin"
-connect "Spark", "rightout", "Echo", "rightin"
-connect "Pulse", "leftout", "Reverb", "leftin"
-connect "Pulse", "rightout", "Reverb", "rightin"
-connect "Pad", "leftout", "Reverb", "leftin"
-connect "Pad", "rightout", "Reverb", "rightin"
-connect "Echo", "leftout", "Reverb", "leftin"
-connect "Echo", "rightout", "Reverb", "rightin"
-connect "Reverb", "leftout", "Master", "leftin"
-connect "Reverb", "rightout", "Master", "rightin"
-alwayson "Echo"
-alwayson "Reverb"
-alwayson "Master"
+Pulse -- a gated square wave, a clock, never a sine pad.
+Write vco2 kamp, ifreq*0.5, 2, 0.18 (four arguments, pulse width 0.18),
+then a lowpass around 2.8 times ifreq. Short linen (attack about 12 ms).
+A square LFO near 4 Hz chops the tone on and off; do not leave it sustained.
+Scale by 0.00955, then the same times-based duck as Pad.
+Slightly louder on the right than the left.
+This voice must stay articulated, so it does not go through the delay.
+
+Echo -- stereo delay, each side feeds only itself. No cross-feedback, no ping-pong.
+Delay times near 0.36 s (left) and 0.41 s (right).
+Feedback 0.82 or higher so repeats fade slowly and texture accumulates
+over a three-minute form. Do not set feedback below 0.75.
+Wet mix near 0.52, blended with the dry input.
+outleta "leftout" and "rightout".
+
+Reverb -- reverbsc, feedback near 0.90, cutoff near 12000 Hz.
+Wet mix near 0.42, blended with the dry input.
+Name the reverb outputs aRevL and aRevR, never aX.
+outleta "leftout" and "rightout".
+
+Master -- soft clip with tanh of each channel times 4.
+A linseg named kfade holds at 1 until 268/1.5 seconds, then falls to 0
+over 17/1.5 seconds. Multiply both channels by kfade.
+Write the dac with outc. Do not use outs.
+
+Signal graph, both channels each:
+Glass into Echo. Spark into Echo.
+Pulse into Reverb (not Echo). Pad into Reverb.
+Echo into Reverb. Reverb into Master.
+alwayson "Echo", alwayson "Reverb", alwayson "Master".
+Do not alwayson the note instruments.
 }})
 
     prints("Compiled orchestra:\n")

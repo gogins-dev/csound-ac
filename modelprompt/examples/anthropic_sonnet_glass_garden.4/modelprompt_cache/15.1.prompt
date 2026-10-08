@@ -1,0 +1,78 @@
+
+Write one Csound orchestra fragment. The host already has blank instruments
+named Glass, Pad, Spark, Pulse, Echo, Reverb, and Master. Redefine those
+seven instruments and wire them. Do not add other instruments.
+
+Return only instr/endin blocks, connect statements, and alwayson statements.
+No markdown, no commentary, no score, no f-statements.
+
+Rules for every instrument:
+- The first line inside each instr is exactly: PrintPfields
+- Note instruments read iamp = p4 (amplitude, already 0 to 1) and ifreq = p5 (Hz).
+- Do not call outs. Do not use the mode opcode.
+- Note instruments send stereo with outleta "leftout" and outleta "rightout".
+- Effect instruments read inleta "leftin" and inleta "rightin".
+- Do not name any audio signal aX. That name breaks the right-channel outleta path.
+- Do not call prints or nstrstr yourself; PrintPfields already does that.
+
+Glass -- struck wineglass / small chime, not a clangorous bell.
+Excite with one impulse plus a noise burst that dies in about 10 ms.
+Five reson filters (scaling mode 2), high Q, inharmonic bar partials near
+1.00, 2.76, 5.40, 8.93, and 13.3 times ifreq. Bandwidths are a few tenths
+of a percent of each partial, widening slightly as the partial rises.
+Partials fall off fast (fundamental full, top partial near 0.05).
+Exponential ring over the whole note (p3), down to about 0.001 of iamp.
+Scale the sum by 0.88. Pan left: left channel full level, right channel
+about 0.40 delayed by a fraction of a millisecond. Do not use eight partials.
+
+Pad -- soft detuned chorale, not a bell.
+Three oscillators: just flat of ifreq, just sharp of ifreq, and the octave.
+Linen envelope, attack and release each about 0.35 of p3.
+Send a different oscillator mix to each channel.
+Scale by 0.178.
+Duck only this voice (and Pulse) with a gain from times:
+full level until 115/1.5 seconds, then fall across 10/1.5 seconds so the
+level is multiplied by 0.20 (about 14 dB down) and stays there until
+158/1.5 seconds, then rise across 16/1.5 seconds back to full by 174/1.5.
+Opening and close stay loud. Do not duck Glass or Spark.
+
+Spark -- pitched brass finger-cymbal / wind-chime. Not bamboo. Not FM.
+One impulse into five high-Q reson filters (scaling mode 2) near ratios
+1.00, 2.00, 2.71, 3.01, and 4.08 times ifreq, very narrow bandwidths,
+a bright cluster (second partial almost as loud as the first).
+Exponential ring of 2.2 seconds, or p3 if p3 is longer, down to 0.001.
+Scale the sum by 1.76.
+Pan right: left channel about 0.40, right channel full, with a fraction
+of a millisecond of delay on the right.
+
+Pulse -- a gated square wave, a clock, never a sine pad.
+vco2 in square/pulse mode (mode 2), an octave below ifreq, then a lowpass
+around 2.8 times ifreq. Short linen (attack about 12 ms).
+A square LFO near 4 Hz chops the tone on and off; do not leave it sustained.
+Scale by 0.00955, then the same times-based duck as Pad.
+Slightly louder on the right than the left.
+This voice must stay articulated, so it does not go through the delay.
+
+Echo -- stereo delay, each side feeds only itself. No cross-feedback, no ping-pong.
+Delay times near 0.36 s (left) and 0.41 s (right).
+Feedback 0.82 or higher so repeats fade slowly and texture accumulates
+over a three-minute form. Do not set feedback below 0.75.
+Wet mix near 0.52, blended with the dry input.
+outleta "leftout" and "rightout".
+
+Reverb -- reverbsc, feedback near 0.90, cutoff near 12000 Hz.
+Wet mix near 0.42, blended with the dry input.
+Name the reverb outputs aRevL and aRevR, never aX.
+outleta "leftout" and "rightout".
+
+Master -- soft clip with tanh of each channel times 4.
+A linseg named kfade holds at 1 until 268/1.5 seconds, then falls to 0
+over 17/1.5 seconds. Multiply both channels by kfade.
+Write the dac with outc. Do not use outs.
+
+Signal graph, both channels each:
+Glass into Echo. Spark into Echo.
+Pulse into Reverb (not Echo). Pad into Reverb.
+Echo into Reverb. Reverb into Master.
+alwayson "Echo", alwayson "Reverb", alwayson "Master".
+Do not alwayson the note instruments.
