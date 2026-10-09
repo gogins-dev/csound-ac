@@ -1,0 +1,163 @@
+instr Glass
+PrintPfields
+iamp = p4
+ifreq = p5
+aExcite mpulse 1, 0
+aNoiseEnv expon 1, 0.01, 0.001
+aNoiseSrc noise 1, 0
+aNoiseBurst = aNoiseSrc * aNoiseEnv
+aSrc = aExcite + aNoiseBurst
+
+aPart1 reson aSrc, ifreq*1.00, ifreq*1.00*0.0020, 2
+aPart2 reson aSrc, ifreq*2.76, ifreq*2.76*0.0025, 2
+aPart3 reson aSrc, ifreq*5.40, ifreq*5.40*0.0030, 2
+aPart4 reson aSrc, ifreq*8.93, ifreq*8.93*0.0035, 2
+aPart5 reson aSrc, ifreq*13.3, ifreq*13.3*0.0040, 2
+
+aRing expon 1, p3, 0.001
+
+aMix = (aPart1*1.00 + aPart2*0.50 + aPart3*0.25 + aPart4*0.12 + aPart5*0.05) * aRing * iamp * 0.88
+
+aRightDel delay aMix, 0.0007
+
+outleta "leftout", aMix
+outleta "rightout", aRightDel*0.40
+endin
+
+instr Pad
+PrintPfields
+iamp = p4
+ifreq = p5
+
+aOsc1 oscili iamp, ifreq*0.995
+aOsc2 oscili iamp, ifreq*1.005
+aOsc3 oscili iamp, ifreq*2
+
+iatt = 0.35*p3
+irel = 0.35*p3
+aEnv linen 1, iatt, p3, irel
+
+kDuck linseg 1, 115, 1, 10, 0.20, 33, 0.20, 16, 1, 66, 1
+
+aLeftMix = (aOsc1*0.60 + aOsc3*0.40) * aEnv * kDuck * 0.282
+aRightMix = (aOsc2*0.60 + aOsc3*0.40) * aEnv * kDuck * 0.282
+
+outleta "leftout", aLeftMix
+outleta "rightout", aRightMix
+endin
+
+instr Spark
+PrintPfields
+iamp = p4
+ifreq = p5
+aExcite mpulse 1, 0
+
+aPart1 reson aExcite, ifreq*1.00, ifreq*1.00*0.0008, 2
+aPart2 reson aExcite, ifreq*2.00, ifreq*2.00*0.0009, 2
+aPart3 reson aExcite, ifreq*2.71, ifreq*2.71*0.0010, 2
+aPart4 reson aExcite, ifreq*3.01, ifreq*3.01*0.0010, 2
+aPart5 reson aExcite, ifreq*4.08, ifreq*4.08*0.0012, 2
+
+iRingDur = (p3 > 2.2 ? p3 : 2.2)
+aRing expon 1, iRingDur, 0.001
+
+aMix = (aPart1*1.00 + aPart2*0.90 + aPart3*0.40 + aPart4*0.30 + aPart5*0.20) * aRing * iamp * 1.76
+
+aRightDel delay aMix, 0.0006
+
+outleta "leftout", aMix*0.40
+outleta "rightout", aRightDel
+endin
+
+instr Pulse
+PrintPfields
+iamp = p4
+ifreq = p5
+
+aSig vco2 iamp, ifreq*0.5, 2, 0.18
+aFilt butlp aSig, ifreq*2.8
+aEnv linen 1, 0.03, p3, 0.07
+
+kRaw lfo 0.5, 4, 3
+kUni = 0.5 + kRaw
+kGate port kUni, 0.018
+
+kDuck linseg 1, 115, 1, 10, 0.20, 33, 0.20, 16, 1, 66, 1
+
+aOut = aFilt * aEnv * kGate * 0.062 * kDuck
+
+aLeftOut = aOut*0.85
+aRightOut = aOut*1.00
+
+outleta "leftout", aLeftOut
+outleta "rightout", aRightOut
+endin
+
+instr Echo
+PrintPfields
+aLeftIn inleta "leftin"
+aRightIn inleta "rightin"
+
+kLeft linseg 680, 80, 620, 80, 210, 80, 960
+kRight linseg 360, 80, 450, 80, 820, 80, 280
+kWet linseg 0.70, 80, 0.64, 80, 0.34, 80, 0.66
+kFb linseg 0.88, 80, 0.84, 80, 0.76, 80, 0.90
+
+aLfb init 0
+aLdel vdelay aLeftIn + aLfb*kFb, kLeft, 2000
+aLfb = aLdel
+
+aRfb init 0
+aRdel vdelay aRightIn + aRfb*kFb, kRight, 2000
+aRfb = aRdel
+
+aLout = aLeftIn*(1-kWet) + aLdel*kWet
+aRout = aRightIn*(1-kWet) + aRdel*kWet
+
+outleta "leftout", aLout
+outleta "rightout", aRout
+endin
+
+instr Reverb
+PrintPfields
+aLeftIn inleta "leftin"
+aRightIn inleta "rightin"
+
+aRevL, aRevR reverbsc aLeftIn, aRightIn, 0.90, 12000
+
+aOutL = aLeftIn*(1-0.42) + aRevL*0.42
+aOutR = aRightIn*(1-0.42) + aRevR*0.42
+
+outleta "leftout", aOutL
+outleta "rightout", aOutR
+endin
+
+instr Master
+PrintPfields
+aLeftIn inleta "leftin"
+aRightIn inleta "rightin"
+
+kfade linseg 1, 222, 1, 18, 0
+
+aOutL = tanh(aLeftIn*4) * kfade
+aOutR = tanh(aRightIn*4) * kfade
+
+outc aOutL, aOutR
+endin
+
+connect "Glass", "leftout", "Echo", "leftin"
+connect "Glass", "rightout", "Echo", "rightin"
+connect "Spark", "leftout", "Echo", "leftin"
+connect "Spark", "rightout", "Echo", "rightin"
+connect "Pulse", "leftout", "Reverb", "leftin"
+connect "Pulse", "rightout", "Reverb", "rightin"
+connect "Pad", "leftout", "Reverb", "leftin"
+connect "Pad", "rightout", "Reverb", "rightin"
+connect "Echo", "leftout", "Reverb", "leftin"
+connect "Echo", "rightout", "Reverb", "rightin"
+connect "Reverb", "leftout", "Master", "leftin"
+connect "Reverb", "rightout", "Master", "rightin"
+
+alwayson "Echo"
+alwayson "Reverb"
+alwayson "Master"

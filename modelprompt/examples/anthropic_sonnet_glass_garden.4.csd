@@ -769,12 +769,22 @@ Opcodes, exact forms that compile in this Csound:
   The name on the left must start with a. vco2 has no k-rate output.
   kSq vco2 does not compile (the only form is a vco2 kkoOOo).
   The fourth argument is pulse width, between 0.01 and 0.99.
-- The Pulse gate is a k-rate square lfo, not vco2:
-  kGate lfo 1, 4, 3
-  Type 3 is square. Multiply the tone by kGate. Do not call vco2 at k-rate.
+- The Pulse gate is a smoothed square, not a hard multiply and not vco2.
+  A raw square (lfo amplitude 1, or any jump through zero) clicks.
+  Write exactly:
+  kRaw lfo 0.5, 4, 3
+  kUni = 0.5 + kRaw
+  kGate port kUni, 0.018
+  kUni stays between 0 and 1. port rounds each edge in about 18 ms.
+  Do not multiply the tone by an unsmoothed lfo. Do not call vco2 at k-rate.
 - Soft clip is tanh. There is no opcode named taninh.
+- Pad oscillators are oscili with TWO arguments only:
+  aOsc oscili iamp, ifreq
+  There is no f-table in this piece. Do not use poscil, oscil, or table.
+  A third argument is a table number and fails at init.
 - Lowpass is butlp or butterlp. Bandpass resonators are reson with scaling 2.
-- Envelopes are linen, linseg, or expon. Do not invent opcode names.
+- Envelopes are linen, linseg, expon, or port. Do not invent opcode names.
+  port is kres port ksig, ihtim. The note envelope on Pulse must be audio-rate.
 - Echo uses vdelay. Its time arguments are MILLISECONDS, not seconds:
   adel vdelay ain, ktime_ms, 2000
   The third argument is an init-time maximum of 2000 milliseconds.
@@ -805,10 +815,16 @@ Scale the sum by 0.88. Pan left: left channel full level, right channel
 about 0.40 delayed by a fraction of a millisecond. Do not use eight partials.
 
 Pad -- soft detuned chorale, not a bell.
-Three oscillators: just flat of ifreq, just sharp of ifreq, and the octave.
+Three oscili tones, two arguments each, no table number:
+  aOsc1 oscili iamp, ifreq*0.995
+  aOsc2 oscili iamp, ifreq*1.005
+  aOsc3 oscili iamp, ifreq*2
+Do not write poscil. Do not pass a function-table number.
 Linen envelope, attack and release each about 0.35 of p3.
 Send a different oscillator mix to each channel.
-Scale by 0.178.
+Scale by 0.282.
+0.282 is 4 dB above 0.178, so Pad sits 4 dB louder than the percussive voices.
+Write 0.282. Do not write 0.178. Do not change the Glass or Spark scales.
 Duck only this voice (and Pulse) with a gain from times.
 The piece is 240 seconds. Do not divide these times by 1.5:
 full level until 115 seconds, then fall across 10 seconds so the
@@ -828,13 +844,20 @@ of a millisecond of delay on the right.
 Pulse -- a gated square wave, a clock, never a sine pad.
 The tone is audio-rate, exactly:
   aSig vco2 iamp, ifreq*0.5, 2, 0.18
-then a lowpass around 2.8 times ifreq. Short linen (attack about 12 ms).
-The gate is a separate k-rate lfo, exactly:
-  kGate lfo 1, 4, 3
-Multiply the filtered tone by kGate so it chops on and off.
+then a lowpass around 2.8 times ifreq.
+The note envelope is audio-rate and starts and ends at silence, so the
+pulse wave does not click at the note boundary:
+  aEnv linen 1, 0.03, p3, 0.07
+Do not use a k-rate linen for this voice. Do not use an attack shorter than 0.025.
+The gate still chops, but its edges are rounded. Write exactly:
+  kRaw lfo 0.5, 4, 3
+  kUni = 0.5 + kRaw
+  kGate port kUni, 0.018
+kRaw is bipolar, so kUni is 0 to 1. Do not use lfo 1, 4, 3.
+Do not multiply by kRaw or by any unsmoothed square. Multiply by kGate and aEnv.
 Do not write kSq vco2. Do not use vco2 as the gate.
-Scale by 0.039, then the same times-based duck as Pad.
-0.039 is 5 dB above 0.022. Write 0.039. Do not write 0.022.
+Scale by 0.062, then the same times-based duck as Pad.
+0.062 is 4 dB above 0.039. Write 0.062. Do not write 0.039.
 Slightly louder on the right than the left.
 This voice must stay articulated, so it does not go through the delay.
 
@@ -868,12 +891,16 @@ Wet mix near 0.42, blended with the dry input.
 Name the reverb outputs aRevL and aRevR, never aX.
 outleta "leftout" and "rightout".
 
-Master -- soft clip with tanh of each channel times 4.
-Write tanh. Do not write taninh, and do not emit a second unused clip line.
+Master -- soft clip, then a fixed makeup gain. Write exactly:
+  aOutL = tanh(aLeftIn * 4) * 2.8 * kfade
+  aOutR = tanh(aRightIn * 4) * 2.8 * kfade
+tanh of the input times 4, with no further gain, peaked near -13 dB.
+The 2.8 brings that peak to about -4 dB, inside -6 dB to -3 dB.
+Do not omit 2.8. Do not write taninh. Do not add a second clip line.
+Do not change Glass, Pad, Spark, or Pulse scales to chase loudness.
 The performance is 240 seconds. A linseg named kfade holds at 1 until
 222 seconds, then falls to 0 over 18 seconds, reaching silence at 240.
 Do not divide by 1.5. Do not fade before 222.
-Multiply both channels by kfade.
 Write the dac with outc. Do not use outs.
 
 Signal graph, both channels each:

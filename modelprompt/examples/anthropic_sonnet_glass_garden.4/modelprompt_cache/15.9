@@ -1,0 +1,150 @@
+instr Glass
+PrintPfields
+iamp = p4
+ifreq = p5
+aClick mpulse 1, 0
+aBurstEnv expon 1, 0.01, 0.001
+aNoise rand 1
+aExcite = aClick + aNoise*aBurstEnv
+aRing expon 1, p3, 0.001
+aPar1 reson aExcite, ifreq*1.00, ifreq*1.00*0.003, 2
+aPar2 reson aExcite, ifreq*2.76, ifreq*2.76*0.004, 2
+aPar3 reson aExcite, ifreq*5.40, ifreq*5.40*0.005, 2
+aPar4 reson aExcite, ifreq*8.93, ifreq*8.93*0.006, 2
+aPar5 reson aExcite, ifreq*13.3, ifreq*13.3*0.007, 2
+aMix = aPar1*1.0 + aPar2*0.5 + aPar3*0.25 + aPar4*0.12 + aPar5*0.05
+aSig = aMix*aRing*iamp*0.88
+aRightDel delay aSig, 0.0007
+outleta "leftout", aSig
+outleta "rightout", aRightDel*0.40
+endin
+
+instr Pad
+PrintPfields
+iamp = p4
+ifreq = p5
+aEnv linen 1, 0.35*p3, p3, 0.35*p3
+aOsc1 poscil 1, ifreq*0.995, 1
+aOsc2 poscil 1, ifreq*1.005, 1
+aOsc3 poscil 1, ifreq*2, 1
+kTime times
+kDuck = 1
+if (kTime > 115 && kTime <= 125) then
+    kDuck = 1 - (kTime-115)/10*0.8
+elseif (kTime>125 && kTime<=158) then
+    kDuck = 0.20
+elseif (kTime>158 && kTime<=174) then
+    kDuck = 0.20 + (kTime-158)/16*0.8
+else
+    kDuck = 1
+endif
+aMixL = aOsc1*0.5 + aOsc2*0.3 + aOsc3*0.2
+aMixR = aOsc1*0.3 + aOsc2*0.5 + aOsc3*0.2
+aAmp = iamp*aEnv*0.282*kDuck
+outleta "leftout", aMixL*aAmp
+outleta "rightout", aMixR*aAmp
+endin
+
+instr Spark
+PrintPfields
+iamp = p4
+ifreq = p5
+aClick mpulse 1, 0
+idur = (p3 > 2.2 ? p3 : 2.2)
+aRing expon 1, idur, 0.001
+aPar1 reson aClick, ifreq*1.00, ifreq*1.00*0.002, 2
+aPar2 reson aClick, ifreq*2.00, ifreq*2.00*0.0025, 2
+aPar3 reson aClick, ifreq*2.71, ifreq*2.71*0.003, 2
+aPar4 reson aClick, ifreq*3.01, ifreq*3.01*0.003, 2
+aPar5 reson aClick, ifreq*4.08, ifreq*4.08*0.0035, 2
+aMix = aPar1*1.0 + aPar2*0.9 + aPar3*0.5 + aPar4*0.4 + aPar5*0.3
+aSig = aMix*aRing*iamp*1.76
+aRightDel delay aSig, 0.0005
+outleta "leftout", aSig*0.40
+outleta "rightout", aRightDel
+endin
+
+instr Pulse
+PrintPfields
+iamp = p4
+ifreq = p5
+aSig vco2 iamp, ifreq*0.5, 2, 0.18
+aFilt butlp aSig, ifreq*2.8
+aEnv linen 1, 0.03, p3, 0.07
+kRaw lfo 0.5, 4, 3
+kUni = 0.5 + kRaw
+kGate port kUni, 0.018
+kTime times
+kDuck = 1
+if (kTime > 115 && kTime <= 125) then
+    kDuck = 1 - (kTime-115)/10*0.8
+elseif (kTime>125 && kTime<=158) then
+    kDuck = 0.20
+elseif (kTime>158 && kTime<=174) then
+    kDuck = 0.20 + (kTime-158)/16*0.8
+else
+    kDuck = 1
+endif
+aOut = aFilt*aEnv*kGate*0.062*kDuck
+outleta "leftout", aOut*0.9
+outleta "rightout", aOut*1.0
+endin
+
+instr Echo
+PrintPfields
+aLeftIn inleta "leftin"
+aRightIn inleta "rightin"
+kLeft linseg 680, 80, 620, 80, 210, 80, 960
+kRight linseg 360, 80, 450, 80, 820, 80, 280
+kWet linseg 0.70, 80, 0.64, 80, 0.34, 80, 0.66
+kFb linseg 0.88, 80, 0.84, 80, 0.76, 80, 0.90
+aLfb init 0
+aRfb init 0
+aLdel vdelay aLeftIn + aLfb*kFb, kLeft, 2000
+aLfb = aLdel
+aRdel vdelay aRightIn + aRfb*kFb, kRight, 2000
+aRfb = aRdel
+aLout = aLeftIn*(1-kWet) + aLdel*kWet
+aRout = aRightIn*(1-kWet) + aRdel*kWet
+outleta "leftout", aLout
+outleta "rightout", aRout
+endin
+
+instr Reverb
+PrintPfields
+aLeftIn inleta "leftin"
+aRightIn inleta "rightin"
+aRevL, aRevR reverbsc aLeftIn, aRightIn, 0.90, 12000
+kWet = 0.42
+aOutL = aLeftIn*(1-kWet) + aRevL*kWet
+aOutR = aRightIn*(1-kWet) + aRevR*kWet
+outleta "leftout", aOutL
+outleta "rightout", aOutR
+endin
+
+instr Master
+PrintPfields
+aLeftIn inleta "leftin"
+aRightIn inleta "rightin"
+kfade linseg 1, 222, 1, 18, 0
+aOutL = tanh(aLeftIn * 4) * 2.8 * kfade
+aOutR = tanh(aRightIn * 4) * 2.8 * kfade
+outc aOutL, aOutR
+endin
+
+connect "Glass", "leftout", "Echo", "leftin"
+connect "Glass", "rightout", "Echo", "rightin"
+connect "Spark", "leftout", "Echo", "leftin"
+connect "Spark", "rightout", "Echo", "rightin"
+connect "Pulse", "leftout", "Reverb", "leftin"
+connect "Pulse", "rightout", "Reverb", "rightin"
+connect "Pad", "leftout", "Reverb", "leftin"
+connect "Pad", "rightout", "Reverb", "rightin"
+connect "Echo", "leftout", "Reverb", "leftin"
+connect "Echo", "rightout", "Reverb", "rightin"
+connect "Reverb", "leftout", "Master", "leftin"
+connect "Reverb", "rightout", "Master", "rightin"
+
+alwayson "Echo"
+alwayson "Reverb"
+alwayson "Master"
