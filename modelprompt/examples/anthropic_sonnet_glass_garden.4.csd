@@ -26,7 +26,7 @@
 ;   5. Section III score, 4 slices -> S (giSec2End to giFormEnd)
 ;   6. connected orchestra         -> modelprompt_orc (last)
 ;
-; Form (~2.7 minutes, tempo x 1.5): tonic garden (G Dorian / D Aeolian) ->
+; Form (240 seconds): tonic garden (G Dorian / D Aeolian) ->
 ;       prepare V of A -> A minor with Spark (sparse, then denser) ->
 ;       prepare return -> tonic with Pulse (isolated, heartbeat, thin close).
 ;       Voices layer on. Harmony is a bass Pad plus hanging tones, not a
@@ -41,12 +41,12 @@ gSProvider = "anthropic"
 gSModel = "claude-sonnet-5"
 
 giComposeDone init 0
-; Original 20/80/160/240/285 s scaled by 2/3 (tempo x 1.5).
-giSliceDur = 20 / 1.5
-giSec1End  = 80 / 1.5
-giSec2End  = 160 / 1.5
-giFormEnd  = 240 / 1.5
-giPerfEnd  = 285 / 1.5
+; Four slices per section. The score fills 240 seconds and the run ends there.
+giSliceDur = 20
+giSec1End  = 80
+giSec2End  = 160
+giFormEnd  = 240
+giPerfEnd  = 240
 
 opcode PrintPfields, 0, 0
     prints "%-24s i %9.4f t %9.4f d %9.4f p4 %9.4f p5 %9.4f #%3d\n", nstrstr(p1), p1, p2, p3, p4, p5, active(p1)
@@ -382,7 +382,7 @@ instr Compose
     ; 1) Title (string)
     ; ------------------------------------------------------------------
     Stitle = modelprompt(gSProvider, gSModel, {{
-Invent a short poetic title (3 to 6 words) for a two-and-a-half-minute stereo piece that
+Invent a short poetic title (3 to 6 words) for a four-minute (240 second) stereo piece that
 begins with glass chimes and soft pads, then is pierced by bright sparks
 and finally by quick pulsing figures. Return only the title text,
 no quotes or commentary.
@@ -764,11 +764,26 @@ Do not write any statement before the first instr.
 Opcodes, exact forms that compile in this Csound:
 - A single click is mpulse with TWO arguments: mpulse 1, 0
   There is no opcode named impulse. One-argument mpulse does not compile.
-- A square wave is vco2 with FOUR arguments: vco2 kamp, kcps, 2, 0.18
-  The fourth argument is pulse width and must be between 0.01 and 0.99.
-  Three-argument vco2 fails at init.
+- A square wave is audio-rate only. Write exactly:
+  aSig vco2 iamp, ifreq*0.5, 2, 0.18
+  The name on the left must start with a. vco2 has no k-rate output.
+  kSq vco2 does not compile (the only form is a vco2 kkoOOo).
+  The fourth argument is pulse width, between 0.01 and 0.99.
+- The Pulse gate is a k-rate square lfo, not vco2:
+  kGate lfo 1, 4, 3
+  Type 3 is square. Multiply the tone by kGate. Do not call vco2 at k-rate.
+- Soft clip is tanh. There is no opcode named taninh.
 - Lowpass is butlp or butterlp. Bandpass resonators are reson with scaling 2.
 - Envelopes are linen, linseg, or expon. Do not invent opcode names.
+- Echo uses vdelay. Its time arguments are MILLISECONDS, not seconds:
+  adel vdelay ain, ktime_ms, 2000
+  The third argument is an init-time maximum of 2000 milliseconds.
+  ktime_ms must stay between 80 and 1500. A value of 0.64 is under one
+  millisecond and is silent as a delay; write 640 for a 0.64 second repeat.
+  Do not use the delay opcode for Echo. The tiny fixed pan offsets on Glass
+  and Spark may still use delay with a time of at least 0.001 seconds.
+  0.0004 is shorter than one control period and can fail to init.
+  The delay opcode is in seconds; vdelay is in milliseconds.
 
 Rules for every instrument:
 - The first line inside each instr is exactly: PrintPfields
@@ -794,10 +809,11 @@ Three oscillators: just flat of ifreq, just sharp of ifreq, and the octave.
 Linen envelope, attack and release each about 0.35 of p3.
 Send a different oscillator mix to each channel.
 Scale by 0.178.
-Duck only this voice (and Pulse) with a gain from times:
-full level until 115/1.5 seconds, then fall across 10/1.5 seconds so the
+Duck only this voice (and Pulse) with a gain from times.
+The piece is 240 seconds. Do not divide these times by 1.5:
+full level until 115 seconds, then fall across 10 seconds so the
 level is multiplied by 0.20 (about 14 dB down) and stays there until
-158/1.5 seconds, then rise across 16/1.5 seconds back to full by 174/1.5.
+158 seconds, then rise across 16 seconds back to full by 174.
 Opening and close stay loud. Do not duck Glass or Spark.
 
 Spark -- pitched brass finger-cymbal / wind-chime. Not bamboo. Not FM.
@@ -810,19 +826,42 @@ Pan right: left channel about 0.40, right channel full, with a fraction
 of a millisecond of delay on the right.
 
 Pulse -- a gated square wave, a clock, never a sine pad.
-Write vco2 kamp, ifreq*0.5, 2, 0.18 (four arguments, pulse width 0.18),
+The tone is audio-rate, exactly:
+  aSig vco2 iamp, ifreq*0.5, 2, 0.18
 then a lowpass around 2.8 times ifreq. Short linen (attack about 12 ms).
-A square LFO near 4 Hz chops the tone on and off; do not leave it sustained.
-Scale by 0.00955, then the same times-based duck as Pad.
+The gate is a separate k-rate lfo, exactly:
+  kGate lfo 1, 4, 3
+Multiply the filtered tone by kGate so it chops on and off.
+Do not write kSq vco2. Do not use vco2 as the gate.
+Scale by 0.039, then the same times-based duck as Pad.
+0.039 is 5 dB above 0.022. Write 0.039. Do not write 0.022.
 Slightly louder on the right than the left.
 This voice must stay articulated, so it does not go through the delay.
 
 Echo -- stereo delay, each side feeds only itself. No cross-feedback, no ping-pong.
-Delay times near 0.36 s (left) and 0.41 s (right).
-Feedback 0.82 or higher so repeats fade slowly and texture accumulates
-over a three-minute form. Do not set feedback below 0.75.
-Wet mix near 0.52, blended with the dry input.
-outleta "leftout" and "rightout".
+The piece is 240 seconds: section I is 0-80, section II is 80-160,
+section III is 160-240. Delays must stay obvious in every section.
+Each side is its own vdelay. Times are milliseconds. Maximum is 2000.
+  aLfb init 0
+  aLdel vdelay aLeftIn + aLfb * kFb, kLeft, 2000
+  aLfb = aLdel
+and the same for the right side with kRight. Do not multiply the delay
+time by 0.001. Do not pass a time below 80.
+kFb stays at or above 0.75 so repeats keep sounding. It still changes
+by section. kWet is the level of the delayed signal (not a fixed 0.52):
+  aLout = aLeftIn * (1 - kWet) + aLdel * kWet
+  aRout = aRightIn * (1 - kWet) + aRdel * kWet
+These are linsegs on the alwayson instrument. Segment lengths are 80, 80, 80
+and cover 240 seconds. Left and right periods move in opposite directions
+and are never equal. No LFO and no rand; fast motion makes the repeats chirp.
+- Section I, long and wet (garden):
+  kLeft linseg 680, 80, 620, 80, 210, 80, 960
+  kRight linseg 360, 80, 450, 80, 820, 80, 280
+  kWet linseg 0.70, 80, 0.64, 80, 0.34, 80, 0.66
+  kFb linseg 0.88, 80, 0.84, 80, 0.76, 80, 0.90
+Section II (the middle 80 seconds) is shorter and lower in level, still
+clearly a delay, not dry. Section III opens the periods and the level again.
+outleta "leftout", aLout and outleta "rightout", aRout.
 
 Reverb -- reverbsc, feedback near 0.90, cutoff near 12000 Hz.
 Wet mix near 0.42, blended with the dry input.
@@ -830,8 +869,11 @@ Name the reverb outputs aRevL and aRevR, never aX.
 outleta "leftout" and "rightout".
 
 Master -- soft clip with tanh of each channel times 4.
-A linseg named kfade holds at 1 until 268/1.5 seconds, then falls to 0
-over 17/1.5 seconds. Multiply both channels by kfade.
+Write tanh. Do not write taninh, and do not emit a second unused clip line.
+The performance is 240 seconds. A linseg named kfade holds at 1 until
+222 seconds, then falls to 0 over 18 seconds, reaching silence at 240.
+Do not divide by 1.5. Do not fade before 222.
+Multiply both channels by kfade.
 Write the dac with outc. Do not use outs.
 
 Signal graph, both channels each:
