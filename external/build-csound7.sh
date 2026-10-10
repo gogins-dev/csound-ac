@@ -32,7 +32,13 @@ unset OPCODE7DIR || true
 # because an old Debug configuration may have cached AddressSanitizer.
 #
 echo "Removing previous build directory..."
-rm -rf "$CSOUND_BUILD"
+# cmake --install runs as root and leaves install_manifest.txt owned by root.
+# A plain rm then fails, so clear root-owned leftovers with sudo.
+if [[ -d "$CSOUND_BUILD" ]] && find "$CSOUND_BUILD" -user root -print -quit | grep -q .; then
+    sudo rm -rf "$CSOUND_BUILD"
+else
+    rm -rf "$CSOUND_BUILD"
+fi
 
 #
 # Configure.
