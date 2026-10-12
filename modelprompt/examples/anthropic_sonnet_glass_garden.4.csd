@@ -556,7 +556,7 @@ No comments, markdown, f-statements, or e-statement.
 Write a second-section slice as valid Csound i-statements.
 
 Instruments allowed: Glass, Pad, and Spark.
-Spark is a brass finger-cymbal / wind-chime -- pitched, ringing -- not a grid of ticks.
+Spark is a small brass bell -- pitched, ringing -- not a wood chime and not a grid of ticks.
 Glass and Pad CONTINUE (do not stop when Spark enters).
 
 TONIC MIDI set: }}
@@ -803,13 +803,13 @@ Opcodes, exact forms that compile in this Csound:
   kGate port kUni, 0.018
   kUni stays between 0 and 1. port rounds each edge in about 18 ms.
   Do not multiply the tone by an unsmoothed lfo. Do not call vco2 at k-rate.
-- Soft clip is tanh. There is no opcode named taninh.
+- Do not soft-clip. Do not use tanh. There is no opcode named taninh.
 - Pad oscillators are oscili with TWO arguments only:
   aOsc oscili iamp, ifreq
-  There is no f-table in this piece. Do not use poscil, oscil, or table.
+  Pad has no function table. Do not use poscil, oscil, or table.
   A third argument is a table number and fails at init.
 - Lowpass is butlp or butterlp. Bandpass resonators are reson with scaling 2.
-- Envelopes are linen, linseg, expon, or port. Do not invent opcode names.
+- Envelopes are linen, linseg, expon, or port. Spark's water bell may also use transeg and xtratim. Do not invent opcode names.
   port is kres port ksig, ihtim. The note envelope on Pulse must be audio-rate.
 - Echo uses vdelay. Its time arguments are MILLISECONDS, not seconds:
   adel vdelay ain, ktime_ms, 2000
@@ -830,7 +830,7 @@ Rules for every instrument:
 - Do not name any audio signal aX. That name breaks the right-channel outleta path.
 - Do not call prints or nstrstr yourself; PrintPfields already does that.
 
-Glass -- struck wineglass / small chime, not a clangorous bell.
+Glass -- bamboo wood chime, not a bell and not brass.
 Excite with mpulse 1, 0 plus a noise burst that dies in about 10 ms.
 Five reson filters (scaling mode 2), high Q, inharmonic bar partials near
 1.00, 2.76, 5.40, 8.93, and 13.3 times ifreq. Bandwidths are a few tenths
@@ -850,7 +850,7 @@ Linen envelope, attack and release each about 0.35 of p3.
 Send a different oscillator mix to each channel.
 Scale by 0.355.
 0.355 is 2 dB above 0.282. Write 0.355. Do not write 0.282.
-Do not change the Glass or Spark scales.
+Do not change the Glass scale. Spark stays at 0.493.
 Duck only this voice (and Pulse) with a gain from times.
 The piece is 240 seconds. Do not divide these times by 1.5:
 full level until 115 seconds, then fall across 10 seconds so the
@@ -858,12 +858,20 @@ level is multiplied by 0.20 (about 14 dB down) and stays there until
 158 seconds, then rise across 16 seconds back to full by 174.
 Opening and close stay loud. Do not duck Glass or Spark.
 
-Spark -- pitched brass finger-cymbal / wind-chime. Not bamboo. Not FM.
-Excite with mpulse 1, 0 into five high-Q reson filters (scaling mode 2) near ratios
-1.00, 2.00, 2.71, 3.01, and 4.08 times ifreq, very narrow bandwidths,
-a bright cluster (second partial almost as loud as the first).
-Exponential ring of 2.2 seconds, or p3 if p3 is longer, down to 0.001.
-Scale the sum by 1.76.
+Spark -- Steven Yi's Water Bell. Not a wood chime, not Glass, not reson.
+Do not use mpulse. Do not use reson. Do not use Glass's bar partials.
+It is an FM bell on cosine waves. The only table in the piece is this one,
+created inside Spark:
+  icos ftgenonce 0, 0, 65537, 11, 1
+Then, exactly:
+  aTone fmbell 1, ifreq, 0.5, 0.5, 0.05, 6, icos, icos, icos, icos, icos
+Index 0.5 and crossfade 0.5. Vibrato depth 0.05 at 6 Hz.
+A very fast rise, then a long smooth fall, so a short score note still rings:
+  xtratim 6
+  aEnv transeg 0, 0.002, 6, 1, 6, -6, 0
+  aSig = aTone * aEnv * iamp * 0.493
+0.493 is 5 dB below 0.876. Write 0.493. Do not write 0.876.
+Do not give Spark a 2.2 second expon.
 Pan right: left channel about 0.40, right channel full, with a fraction
 of a millisecond of delay on the right.
 
@@ -882,8 +890,8 @@ The gate still chops, but its edges are rounded. Write exactly:
 kRaw is bipolar, so kUni is 0 to 1. Do not use lfo 1, 4, 3.
 Do not multiply by kRaw or by any unsmoothed square. Multiply by kGate and aEnv.
 Do not write kSq vco2. Do not use vco2 as the gate.
-Scale by 0.062, then the same times-based duck as Pad.
-0.062 is 4 dB above 0.039. Write 0.062. Do not write 0.039.
+Scale by 0.035, then the same times-based duck as Pad.
+0.035 is 5 dB below 0.062. Write 0.035. Do not write 0.062.
 Slightly louder on the right than the left.
 This voice must stay articulated, so it does not go through the delay.
 
@@ -922,13 +930,13 @@ Wet mix near 0.42, blended with the dry input.
 Name the reverb outputs aRevL and aRevR, never aX.
 outleta "leftout" and "rightout".
 
-Master -- soft clip, then a fixed makeup gain. Write exactly:
-  aOutL = tanh(aLeftIn * 4) * 2.0 * kfade
-  aOutR = tanh(aRightIn * 4) * 2.0 * kfade
-tanh of the input times 4, with no further gain, peaked near -13 dB.
-The 2.0 brings that peak to about -4 dB, inside -6 dB to -3 dB.
-Do not omit 2.0. Do not write taninh. Do not add a second clip line.
-Do not change Glass, Spark, or Pulse scales to chase loudness. Pad stays at 0.355.
+Master -- linear gain only. No soft clip, so each note keeps its own amplitude.
+Do not use tanh. Do not write taninh. Write exactly:
+  aOutL = aLeftIn * 4.0 * kfade
+  aOutR = aRightIn * 4.0 * kfade
+4.0 is the same gain on every voice. It puts the peak about 6 dB below full scale.
+Do not write 2.0. Do not multiply the input by 4 inside a clip.
+Do not change the Glass, Pad, Spark, or Pulse scales. Glass stays at 0.88. Pad stays at 0.355. Spark stays at 0.493. Pulse stays at 0.035.
 The performance is 240 seconds. A linseg named kfade holds at 1 until
 222 seconds, then falls to 0 over 18 seconds, reaching silence at 240.
 Do not divide by 1.5. Do not fade before 222.
