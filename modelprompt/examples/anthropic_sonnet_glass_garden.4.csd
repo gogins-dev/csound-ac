@@ -477,17 +477,21 @@ Join:
 p4 is amplitude in (0, 1]. p5 is a Hz literal (e.g. 196.00), never MIDI,
 never cpsmidinn() or any expression. Four numbers after the quoted name.
 
+TEMPO of Section I only: slow, about 40 beats a minute.
+Glass onsets inside a phrase are 1.2 to 1.8 seconds apart.
+Do not write anything closer than 0.9 seconds. This is not the fast
+middle section and not the later heartbeat.
 Write PHRASES, not a grid and not an up-down walk of the set:
-- 3 to 5 short Glass phrases, each 2 to 4 notes.
+- 3 to 5 short Glass phrases, each 2 to 4 notes, at that slow spacing.
 - Repeat one Glass Hz as a toll (at least 3 times in this window).
 - Each repeated Hz (the toll especially) must change duration: clearly shorter
   or clearly longer than the previous onset of that pitch. Never copy p3.
-- Leave at least two gaps of 0.7 to 1.3 seconds with no Glass onset.
+- Leave at least two gaps of 2.0 to 3.5 seconds with no Glass onset.
 - Do not space onsets evenly. Do not list the pitch set in order.
 
 Counts for THIS slice only:
 }})
-        Stmp = sprintf("- Glass: %d to %d chimes, durations 0.33 to 1.2.\n", iglo, ighi)
+        Stmp = sprintf("- Glass: %d to %d chimes, durations 0.9 to 2.4.\n", iglo, ighi)
         Sprompt1 = strcat(Sprompt1, Stmp)
         Sprompt1 = strcat(Sprompt1, {{
 - Pad: exactly 2 or 3 tones (never more than 3 sounding). Durations 8 to 12
@@ -535,7 +539,7 @@ No comments, markdown, f-statements, or e-statement.
             ishi = 28
             iglo = 12
             ighi = 16
-            Sharm2 = "Remain in A MINOR. Bass Pad is A (110.00 Hz). Densest Spark of the piece, still in groups of 2-3 with gaps, never a constant grid."
+            Sharm2 = "Remain in A MINOR. Bass Pad is A (110.00 Hz). Densest Spark of the piece, still in groups of 2-3, never a constant grid, and never a silence."
         endif
         if iwin == 3 then
             islo = 10
@@ -544,9 +548,9 @@ No comments, markdown, f-statements, or e-statement.
             ighi = 12
             Sharm2 = sprintf("PREPARE return to the TONIC, do not cadence yet. Start in A minor. Bass Pad moves toward D (146.83 Hz) or mixes tonic-set bass. Spark thins. End hanging so the tonic can cadence at %.1f s. Every p2 in [%.1f, %.1f). Forbidden: p2=8, p4=50, p5=0.35.", giSec2End, it0, it1)
         endif
-        Sseg = sprintf("SEGUE: no downbeat at %.1f. First Spark/Glass 1.0 to 2.7 s after %.1f, not a tutti. Stagger Pads; durations 8 to 12 to overlap %.1f. Keep bass A unless harmony below moves it. Glass continues from the previous slice.", it0, it0, it1)
+        Sseg = sprintf("SEGUE: no downbeat at %.1f. A Pad or Glass is already sounding at %.1f. Do not open a silence. Stagger Pads so they cover this whole window through %.1f. Keep bass A unless harmony below moves it. Glass continues from the previous slice.", it0, it0, it1)
         if iwin == 0 then
-            Sseg = sprintf("SEGUE from Section I: no hard cut at %.1f. Glass continues. Spark enters 1.3 to 3.3 s after %.1f, not a pile-up at %.1f. Pad bass may move to A (110.00) as a continuation, not a new chorale. Pad durations 8 to 12 overlapping %.1f.", giSec1End, giSec1End, giSec1End, it1)
+            Sseg = sprintf("SEGUE from Section I: no hard cut and no silence at %.1f. Glass or Pad is already sounding. Spark may enter with them, not after a wait. Pad bass may move to A (110.00) as a continuation, not a new chorale. Pads overlap so the window through %.1f never goes quiet.", giSec1End, it1)
         endif
         Sprompt2 = {{
 Write a second-section slice as valid Csound i-statements.
@@ -583,8 +587,16 @@ p4 is amplitude in (0, 1], never MIDI 36-84. p5 is Hz >= 40, never 0.35.
 p5 is a numeric Hz literal, never a MIDI key and never cpsmidinn().
 Four numbers after the name: i "Name" start dur amp freq. No comment lines.
 
+TEMPO of Section II only: fast, clearly quicker than Section I.
+Spark onsets inside a group are 0.09 to 0.16 seconds apart (a rattle,
+about four times the pace of Section I).
+Glass inside a phrase is 0.28 to 0.50 seconds apart, durations 0.18 to 0.45.
+Do not use Section I's 1.2 to 1.8 second Glass spacing.
+Do not leave any time in this slice with no note sounding. Between Spark
+groups a Pad or Glass must already be sounding.
 Rhythm -- groups, not a rate:
-- Spark in groups of 2 or 3 onsets 0.08 to 0.19 s apart, then a gap of 0.53 to 1.2 s.
+- Spark in groups of 2 or 3 at that fast spacing. The space between groups
+  is filled by Pad or Glass, never by silence.
 - Never a constant spacing. Never walk the eight A-minor pitches in order.
 - Durations: never copy p3. Consecutive Spark or Glass notes, and any repeated
   Hz, must be clearly shorter or clearly longer than the previous one.
@@ -593,12 +605,18 @@ Counts for THIS slice only:
 }})
         Stmp = sprintf("- Spark: %d to %d notes, durations 0.05 to 0.23.\n", islo, ishi)
         Sprompt2 = strcat(Sprompt2, Stmp)
-        Stmp = sprintf("- Glass: %d to %d chimes in short phrases (not a scale run), durations 0.33 to 1.2.\n", iglo, ighi)
+        Stmp = sprintf("- Glass: %d to %d chimes in short phrases (not a scale run), durations 0.18 to 0.45.\n", iglo, ighi)
         Sprompt2 = strcat(Sprompt2, Stmp)
         Sprompt2 = strcat(Sprompt2, {{
-- Pad: exactly 2 or 3 tones (never more than 3 sounding). Durations 8 to 12
-  so they overlap the next slice. One Pad is the BASS.
-- Emit Spark, Glass, AND Pad.
+- Pad: exactly 2 or 3 tones (never more than 3 sounding). Durations 8 to 12,
+  overlapped so a Pad is sounding from the first moment of this slice
+  through the last, and into the next slice. One Pad is the BASS.
+  The other Pads are the upper sustained tones. They must be in tune
+  with that bass: chord tones only, not the next scale step. While the
+  bass is A, those upper tones are only C, E, or a higher A. Do not
+  sustain B or D over an A bass. If the bass moves to D, the upper tones
+  move with it and stay notes of the D chord.
+- Emit Spark, Glass, AND Pad. No silent gap.
 
 p4: Spark 0.10-0.20, Glass 0.18-0.32, Pad 0.035-0.071.
 }})
@@ -708,15 +726,23 @@ p4 is amplitude in (0, 1], never MIDI. p5 is Hz >= 40, never 0.35.
 p5 is a numeric Hz literal, never MIDI, never cpsmidinn().
 Four numbers after the name. No comment lines.
 
+TEMPO of Section III only: a slow heartbeat, slower than Section I's
+phrases and nothing like Section II's rattle.
+Pulse long-short pairs: the short gap is 0.55 to 0.75 seconds, the long
+gap is 1.8 to 2.6 seconds, then a hole of 3.0 to 5.0 seconds with no Pulse.
+Glass tolls are isolated, 3.0 to 6.0 seconds apart, durations 1.6 to 3.4.
+Do not write Spark onsets 0.09 to 0.16 seconds apart except as a rare
+leftover of two notes. Do not use Section I's 1.2 to 1.8 second phrases
+as the Pulse.
 Rhythm -- not an even grid:
-- Pulse as long-short pairs (clave/heartbeat), then a gap. Prefer bass pitches.
-- Do not space Pulse every 0.53 to 0.73 s evenly. Do not walk the pitch set in order.
+- Pulse as those long-short pairs, then the hole. Prefer bass pitches.
+- Do not space Pulse evenly. Do not walk the pitch set in order.
 - Durations: never copy p3. Consecutive Pulse, Glass, or Spark notes, and any
   repeated Hz, must be clearly shorter or clearly longer than the previous one.
 
 Counts for THIS slice only:
 }})
-        Stmp = sprintf("- Pulse: %d to %d notes, durations 0.33 to 1.3. If this is the close, keep them\n  in the bass with holes.\n", iplo, iphi)
+        Stmp = sprintf("- Pulse: %d to %d notes, durations 0.7 to 1.8. If this is the close, keep them\n  in the bass with holes.\n", iplo, iphi)
         Sprompt3 = strcat(Sprompt3, Stmp)
         Stmp = sprintf("- Spark: %d to %d (zero is allowed if the range includes 0).\n", islo, ishi)
         Sprompt3 = strcat(Sprompt3, Stmp)
@@ -822,9 +848,9 @@ Three oscili tones, two arguments each, no table number:
 Do not write poscil. Do not pass a function-table number.
 Linen envelope, attack and release each about 0.35 of p3.
 Send a different oscillator mix to each channel.
-Scale by 0.282.
-0.282 is 4 dB above 0.178, so Pad sits 4 dB louder than the percussive voices.
-Write 0.282. Do not write 0.178. Do not change the Glass or Spark scales.
+Scale by 0.355.
+0.355 is 2 dB above 0.282. Write 0.355. Do not write 0.282.
+Do not change the Glass or Spark scales.
 Duck only this voice (and Pulse) with a gain from times.
 The piece is 240 seconds. Do not divide these times by 1.5:
 full level until 115 seconds, then fall across 10 seconds so the
@@ -863,27 +889,32 @@ This voice must stay articulated, so it does not go through the delay.
 
 Echo -- stereo delay, each side feeds only itself. No cross-feedback, no ping-pong.
 The piece is 240 seconds: section I is 0-80, section II is 80-160,
-section III is 160-240. Delays must stay obvious in every section.
+section III is 160-240. Each section keeps one delay, then changes.
+The three sections must be easy to hear apart: a long blooming echo,
+then a short echo that dies quickly, then a wide contrary echo.
 Each side is its own vdelay. Times are milliseconds. Maximum is 2000.
   aLfb init 0
   aLdel vdelay aLeftIn + aLfb * kFb, kLeft, 2000
   aLfb = aLdel
 and the same for the right side with kRight. Do not multiply the delay
 time by 0.001. Do not pass a time below 80.
-kFb stays at or above 0.75 so repeats keep sounding. It still changes
-by section. kWet is the level of the delayed signal (not a fixed 0.52):
+kWet is the level of the delayed signal:
   aLout = aLeftIn * (1 - kWet) + aLdel * kWet
   aRout = aRightIn * (1 - kWet) + aRdel * kWet
-These are linsegs on the alwayson instrument. Segment lengths are 80, 80, 80
-and cover 240 seconds. Left and right periods move in opposite directions
-and are never equal. No LFO and no rand; fast motion makes the repeats chirp.
-- Section I, long and wet (garden):
-  kLeft linseg 680, 80, 620, 80, 210, 80, 960
-  kRight linseg 360, 80, 450, 80, 820, 80, 280
-  kWet linseg 0.70, 80, 0.64, 80, 0.34, 80, 0.66
-  kFb linseg 0.88, 80, 0.84, 80, 0.76, 80, 0.90
-Section II (the middle 80 seconds) is shorter and lower in level, still
-clearly a delay, not dry. Section III opens the periods and the level again.
+kFb is the decay. Higher feedback rings for many repeats. Lower feedback
+dies after a few repeats. Write the four linsegs exactly. Each holds its
+value for 70 seconds, moves across the section boundary in 10 seconds,
+and holds the next value. Left and right are never equal. No LFO and no
+rand; do not glide the time through the whole section.
+  kLeft linseg 1200, 70, 1200, 10, 180, 70, 180, 10, 1500, 80, 1500
+  kRight linseg 480, 70, 480, 10, 860, 70, 860, 10, 260, 80, 260
+  kWet linseg 0.78, 70, 0.78, 10, 0.45, 70, 0.45, 10, 0.70, 80, 0.70
+  kFb linseg 0.94, 70, 0.94, 10, 0.58, 70, 0.58, 10, 0.80, 80, 0.80
+Section I (0-80): left 1200 ms, right 480 ms, wet 0.78, feedback 0.94
+(long repeats). Section II (80-160): left 180 ms, right 860 ms, wet 0.45,
+feedback 0.58 (short decay, still a delay). Section III (160-240): left
+1500 ms, right 260 ms, wet 0.70, feedback 0.80. Do not reuse one time
+for the whole piece. Do not keep feedback above 0.9 in every section.
 outleta "leftout", aLout and outleta "rightout", aRout.
 
 Reverb -- reverbsc, feedback near 0.90, cutoff near 12000 Hz.
@@ -892,12 +923,12 @@ Name the reverb outputs aRevL and aRevR, never aX.
 outleta "leftout" and "rightout".
 
 Master -- soft clip, then a fixed makeup gain. Write exactly:
-  aOutL = tanh(aLeftIn * 4) * 2.8 * kfade
-  aOutR = tanh(aRightIn * 4) * 2.8 * kfade
+  aOutL = tanh(aLeftIn * 4) * 2.0 * kfade
+  aOutR = tanh(aRightIn * 4) * 2.0 * kfade
 tanh of the input times 4, with no further gain, peaked near -13 dB.
-The 2.8 brings that peak to about -4 dB, inside -6 dB to -3 dB.
-Do not omit 2.8. Do not write taninh. Do not add a second clip line.
-Do not change Glass, Pad, Spark, or Pulse scales to chase loudness.
+The 2.0 brings that peak to about -4 dB, inside -6 dB to -3 dB.
+Do not omit 2.0. Do not write taninh. Do not add a second clip line.
+Do not change Glass, Spark, or Pulse scales to chase loudness. Pad stays at 0.355.
 The performance is 240 seconds. A linseg named kfade holds at 1 until
 222 seconds, then falls to 0 over 18 seconds, reaching silence at 240.
 Do not divide by 1.5. Do not fade before 222.
