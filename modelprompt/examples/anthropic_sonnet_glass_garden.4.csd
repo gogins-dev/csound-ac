@@ -428,21 +428,21 @@ No duplicate consecutive values. Return only the JSON array.
     while iwin < 4 do
         it0 = iwin * giSliceDur
         it1 = it0 + giSliceDur
-        Sharm1 = "TONIC. Bass Pad is the lowest tonic pitch as Hz. One Glass pitch is a toll (repeat it). Do not modulate."
+        Sharm1 = "Open on the tonic bass, as Hz, not the MIDI key. Halfway through this slice the bass rises a fifth. Upper Pad tones are chord tones of the bass that is sounding, and they change when the bass changes. Do not hold one bass for the whole slice. One Glass pitch is a toll."
         if iwin == 1 then
-            Sharm1 = "TONIC. Bass still the lowest tonic pitch as Hz. Continue the garden; the toll pitch may change."
+            Sharm1 = "A new chord at the start: the fourth of the home key. Before this slice ends, return to the tonic. Two different bass notes. Upper tones follow whichever bass is sounding."
         endif
         if iwin == 2 then
-            Sharm1 = "TONIC. Bass lowest tonic as Hz. Slightly busier than the previous slice, still phrases and holes."
+            Sharm1 = "Tonic for only a few seconds, then the bass moves to E (164.81 Hz) and B (246.94 Hz) enters. The turn toward A minor begins here. Upper tones follow the new bass. Do not stay on the opening chord."
         endif
         if iwin == 3 then
-            Sharm1 = sprintf("PREPARE A minor, do not cadence in A. Start in the tonic. Bass Pad moves to E (164.81 Hz) or E under tonic. Introduce B (246.94 Hz). End hanging on E (164.81 or 329.63) or B so A can resolve at %.1f s. Mix tonic pitches with A-minor 110.00 164.81 220.00 246.94 261.63 293.66 329.63 440.00.", giSec1End)
+            Sharm1 = sprintf("The bass is already on E (164.81 Hz) at the start. Hang on E or B (246.94 Hz). Do not fall back to the tonic. A minor resolves at %.1f s.", giSec1End)
         endif
         iglo = 8 + iwin * 2
         ighi = 12 + iwin * 2
         Sseg = "OPENING. First events may start near 0 s."
         if iwin > 0 then
-            Sseg = sprintf("SEGUE from the previous slice: no downbeat or reset at %.1f. First Glass onset 1.0 to 2.7 s after %.1f, not a tutti at the join. Do not start all Pads at %.1f; stagger replacements. Pad durations 8 to 12 so they overlap past %.1f into the next slice. Keep the same bass Hz unless harmony below moves it. Continue the garden; do not begin a new piece.", it0, it0, it0, it1)
+            Sseg = sprintf("SEGUE: no downbeat at %.1f. First Glass onset 1.0 to 2.7 s after %.1f, not a tutti. The new chord starts as the previous chord ends, with about a second of overlap. Do not carry the previous bass through this slice.", it0, it0)
         endif
         ; Csound 7 sprintf reallocs a negative size when a long result
         ; outgrows strlen(fmt)+13*nargs. Numbers only in short sprintf.
@@ -494,8 +494,9 @@ Counts for THIS slice only:
         Stmp = sprintf("- Glass: %d to %d chimes, durations 0.9 to 2.4.\n", iglo, ighi)
         Sprompt1 = strcat(Sprompt1, Stmp)
         Sprompt1 = strcat(Sprompt1, {{
-- Pad: exactly 2 or 3 tones (never more than 3 sounding). Durations 8 to 12
-  so they overlap the next slice. One Pad is the BASS of the window.
+- Pad: exactly 2 or 3 tones sounding. Two chords in this slice. Each lasts
+  6 to 9 seconds, then the bass changes. Overlap the next chord by about a
+  second. One Pad is the bass of that chord; the others match it.
 - Emit Glass AND Pad.
 
 p4: Glass 0.35-0.55, Pad 0.042-0.085.
@@ -526,31 +527,31 @@ No comments, markdown, f-statements, or e-statement.
         ishi = 18
         iglo = 10
         ighi = 14
-        Sharm2 = "Remain in A MINOR. Bass Pad is A (110.00 Hz). Use only A-minor Hz (include B 246.94, no Bb). Do not walk the eight pitches in order."
+        Sharm2 = "Leave A. At the start the bass is D (146.83 Hz) or F (174.61 Hz). Before the slice ends it moves to a different chord. Upper tones are chord tones of the bass sounding then. Do not remain on A-C-E."
         if iwin == 0 then
             islo = 6
             ishi = 10
             iglo = 8
             ighi = 12
-            Sharm2 = sprintf("RESOLVE into A minor at the opening (cadence or settle on A-C-E). Bass Pad is A (110.00 Hz). Then stay in A minor. Spark is only just entering -- a few groups, not a grid. Every p2 in [%.1f, %.1f). Forbidden: p2=0, p2=8, MIDI in p4 or p5.", it0, it1)
+            Sharm2 = sprintf("RESOLVE to A minor at the join: bass A (110.00 Hz), upper tones C (261.63) and E (164.81 or 329.63). Halfway through, the bass leaves A for F (174.61 Hz) or D (146.83 Hz) and the upper tones move with it. Do not hold A-C-E for the whole slice. Spark is only just entering. Every p2 in [%.1f, %.1f). Forbidden: p2=0, p2=8, MIDI in p4 or p5.", it0, it1)
         endif
         if iwin == 2 then
             islo = 18
             ishi = 28
             iglo = 12
             ighi = 16
-            Sharm2 = "Remain in A MINOR. Bass Pad is A (110.00 Hz). Densest Spark of the piece, still in groups of 2-3, never a constant grid, and never a silence."
+            Sharm2 = "A minor at the start (bass A, 110.00 Hz), then before the end the bass moves to E (164.81 Hz) and the upper tones follow. Densest Spark of the piece, still in groups of 2-3, never a constant grid, and never a silence."
         endif
         if iwin == 3 then
             islo = 10
             ishi = 16
             iglo = 8
             ighi = 12
-            Sharm2 = sprintf("PREPARE return to the TONIC, do not cadence yet. Start in A minor. Bass Pad moves toward D (146.83 Hz) or mixes tonic-set bass. Spark thins. End hanging so the tonic can cadence at %.1f s. Every p2 in [%.1f, %.1f). Forbidden: p2=8, p4=50, p5=0.35.", giSec2End, it0, it1)
+            Sharm2 = sprintf("The return home starts now. Bass is D (146.83 Hz) from the beginning, then the fifth of the home key. Do not start on A. End hanging so the tonic can arrive at %.1f s. Spark thins. Every p2 in [%.1f, %.1f). Forbidden: p2=8, p4=50, p5=0.35.", giSec2End, it0, it1)
         endif
-        Sseg = sprintf("SEGUE: no downbeat at %.1f. A Pad or Glass is already sounding at %.1f. Do not open a silence. Stagger Pads so they cover this whole window through %.1f. Keep bass A unless harmony below moves it. Glass continues from the previous slice.", it0, it0, it1)
+        Sseg = sprintf("SEGUE: no silence at %.1f. A Pad or Glass is already sounding. The bass changes with this slice. Do not keep the previous bass for the whole window. Glass continues.", it0)
         if iwin == 0 then
-            Sseg = sprintf("SEGUE from Section I: no hard cut and no silence at %.1f. Glass or Pad is already sounding. Spark may enter with them, not after a wait. Pad bass may move to A (110.00) as a continuation, not a new chorale. Pads overlap so the window through %.1f never goes quiet.", giSec1End, it1)
+            Sseg = sprintf("SEGUE from Section I: no hard cut and no silence at %.1f. Glass or Pad is already sounding. Spark may enter with them. The bass arrives on A (110.00 Hz) at the join, and leaves A before the slice ends. Overlap the chords by about a second.", giSec1End)
         endif
         Sprompt2 = {{
 Write a second-section slice as valid Csound i-statements.
@@ -608,14 +609,11 @@ Counts for THIS slice only:
         Stmp = sprintf("- Glass: %d to %d chimes in short phrases (not a scale run), durations 0.18 to 0.45.\n", iglo, ighi)
         Sprompt2 = strcat(Sprompt2, Stmp)
         Sprompt2 = strcat(Sprompt2, {{
-- Pad: exactly 2 or 3 tones (never more than 3 sounding). Durations 8 to 12,
-  overlapped so a Pad is sounding from the first moment of this slice
-  through the last, and into the next slice. One Pad is the BASS.
-  The other Pads are the upper sustained tones. They must be in tune
-  with that bass: chord tones only, not the next scale step. While the
-  bass is A, those upper tones are only C, E, or a higher A. Do not
-  sustain B or D over an A bass. If the bass moves to D, the upper tones
-  move with it and stay notes of the D chord.
+- Pad: exactly 2 or 3 tones sounding. Two chords in this slice, each
+  6 to 9 seconds, overlapped by about a second so the slice never goes
+  silent. One Pad is the bass of that chord. The upper tones match the
+  bass that is sounding then, and they change when the bass changes.
+  Do not hold the previous chord over the new bass.
 - Emit Spark, Glass, AND Pad. No silent gap.
 
 p4: Spark 0.10-0.20, Glass 0.18-0.32, Pad 0.035-0.071.
@@ -652,7 +650,7 @@ No comments, markdown, f-statements, or e-statement.
         iglo = 8
         ighi = 12
         ipadn = 3
-        Sharm3 = "Remain in the TONIC. Bass Pad is the lowest tonic pitch as Hz. Pulse is a heartbeat (long-short), not an even clock."
+        Sharm3 = "Home key, and not one chord for the whole slice. Start on a neighbor of the tonic, then return to the tonic bass. That bass is the Hz of the opening tonic, the same frequency region as the opening, never the MIDI key written as Hz. Do not write 46, 53, 60, or 67 as p5. Pulse is a heartbeat, not an even clock."
         if iwin == 0 then
             iplo = 6
             iphi = 10
@@ -661,7 +659,7 @@ No comments, markdown, f-statements, or e-statement.
             iglo = 8
             ighi = 12
             ipadn = 3
-            Sharm3 = sprintf("RESOLVE to the TONIC. Bass Pad is the lowest tonic pitch as Hz. Pulse ENTERS as isolated long-short hits in the tonic bass, not a continuous clock. Spark is thinning. Every p2 in [%.1f, %.1f). Forbidden: p2=60, p4=110, p5=0.35.", it0, it1)
+            Sharm3 = sprintf("RESOLVE to the opening tonic at the join. The bass Hz is that tonic's frequency, not its MIDI number. Do not write 46, 53, 60, or 67 as p5. Halfway through, the bass moves to the fifth of that tonic and the upper tones follow. Pulse enters as isolated long-short hits, not a continuous clock. Spark thins. Every p2 in [%.1f, %.1f). Forbidden: p2=60, p4=110, p5=0.35.", it0, it1)
         endif
         if iwin == 2 then
             iplo = 8
@@ -671,7 +669,7 @@ No comments, markdown, f-statements, or e-statement.
             iglo = 6
             ighi = 10
             ipadn = 2
-            Sharm3 = "TONIC. Bass lowest tonic as Hz. Pulse at half-time (slower, more space). Spark sparse. Glass more isolated."
+            Sharm3 = "Tonic, then one move to a neighbor chord, then the bass settles back. p5 is Hz, never a MIDI key. Pulse at half-time. Spark sparse. Glass more isolated."
         endif
         if iwin == 3 then
             iplo = 6
@@ -681,11 +679,11 @@ No comments, markdown, f-statements, or e-statement.
             iglo = 4
             ighi = 8
             ipadn = 2
-            Sharm3 = {{CLOSE in the TONIC. Thin, not a full inventory. Pulse in the bass only (lowest tonic Hz). Pad: 1 or 2 tones, tonic bass only. Glass: isolated tolls. Spark: almost none (0 to 4). Leave holes. The piece should recede.}}
+            Sharm3 = {{CLOSE on the opening tonic bass, as Hz, not the MIDI key. This last slice may hold that one chord. Thin, not a full inventory. Pulse in the bass only. Pad: 1 or 2 tones. Glass: isolated tolls. Spark: almost none (0 to 4). Leave holes. The piece should recede.}}
         endif
-        Sseg = sprintf("SEGUE: no downbeat at %.1f. First Pulse/Glass 1.0 to 2.7 s after %.1f, not a tutti. Stagger Pads; durations 8 to 12 overlapping %.1f. Keep the same tonic bass unless harmony below moves it.", it0, it0, it1)
+        Sseg = sprintf("SEGUE: no downbeat at %.1f. First Pulse or Glass 1.0 to 2.7 s after %.1f, not a tutti. The bass follows this slice. Do not freeze on the previous chord.", it0, it0)
         if iwin == 0 then
-            Sseg = sprintf("SEGUE from Section II: no hard cut at %.1f. Glass continues. Pulse enters 1.3 to 3.3 s after %.1f as isolated hits, not a pile-up. Pad bass may return to the lowest tonic as a continuation.", giSec2End, giSec2End)
+            Sseg = sprintf("SEGUE from Section II: no hard cut at %.1f. Glass continues. Pulse enters 1.3 to 3.3 s after %.1f as isolated hits. The Pad bass arrives on the opening tonic's Hz, not a MIDI number written as a frequency.", giSec2End, giSec2End)
         endif
         if iwin == 3 then
             Sseg = sprintf("CLOSE: thin out; do not start a new tutti at %.1f. Isolated events, overlapping Pads from the previous slice.", it0)
@@ -748,7 +746,7 @@ Counts for THIS slice only:
         Sprompt3 = strcat(Sprompt3, Stmp)
         Stmp = sprintf("- Glass: %d to %d chimes as phrases or isolated tolls, not a scale run.\n", iglo, ighi)
         Sprompt3 = strcat(Sprompt3, Stmp)
-        Stmp = sprintf("- Pad: at most %d tones sounding (1 to 3). Durations 8 to 12 to overlap.\n", ipadn)
+        Stmp = sprintf("- Pad: at most %d tones sounding. Each chord lasts 6 to 9 seconds, except the final slice, which may hold the tonic. p5 is Hz, never a MIDI key.\n", ipadn)
         Sprompt3 = strcat(Sprompt3, Stmp)
         Sprompt3 = strcat(Sprompt3, {{
   One Pad is the BASS.

@@ -1,0 +1,48 @@
+
+Write valid Csound i-statements for instruments Glass and Pad only.
+
+TONIC MIDI pitch set (convert each to Hz; write the Hz number, not cpsmidinn):
+ 46.0 55.0 60.0 62.0 64.0 67.0 65.0 62.0 60.0 58.0 57.0 55.0 53.0 55.0 60.0 64.0 67.0
+
+A minor (destination, Hz): 110.00 164.81 220.00 246.94 261.63 293.66 329.63 440.00
+
+This is slice 3 of 4 of Section I, absolute time 40.0 to 60.0.
+
+Harmony for THIS slice:
+Tonic for only a few seconds, then the bass moves to E (164.81 Hz) and B (246.94 Hz) enters. The turn toward A minor begins here. Upper tones follow the new bass. Do not stay on the opening chord.
+
+Join:
+SEGUE: no downbeat at 40.0. First Glass onset 1.0 to 2.7 s after 40.0, not a tutti. The new chord starts as the previous chord ends, with about a second of overlap. Do not carry the previous bass through this slice.
+
+TIMEBASE: p2 is ABSOLUTE time in [40.0, 60.0].
+Example: i "Glass" 40.20 0.53 0.42 196.00
+
+p4 is amplitude in (0, 1]. p5 is a Hz literal (e.g. 196.00), never MIDI,
+never cpsmidinn() or any expression. Four numbers after the quoted name.
+
+TEMPO of Section I only: slow, about 40 beats a minute.
+Glass onsets inside a phrase are 1.2 to 1.8 seconds apart.
+Do not write anything closer than 0.9 seconds. This is not the fast
+middle section and not the later heartbeat.
+Write PHRASES, not a grid and not an up-down walk of the set:
+- 3 to 5 short Glass phrases, each 2 to 4 notes, at that slow spacing.
+- Repeat one Glass Hz as a toll (at least 3 times in this window).
+- Each repeated Hz (the toll especially) must change duration: clearly shorter
+  or clearly longer than the previous onset of that pitch. Never copy p3.
+- Leave at least two gaps of 2.0 to 3.5 seconds with no Glass onset.
+- Do not space onsets evenly. Do not list the pitch set in order.
+
+Counts for THIS slice only:
+- Glass: 12 to 16 chimes, durations 0.9 to 2.4.
+
+- Pad: exactly 2 or 3 tones sounding. Two chords in this slice. Each lasts
+  6 to 9 seconds, then the bass changes. Overlap the next chord by about a
+  second. One Pad is the bass of that chord; the others match it.
+- Emit Glass AND Pad.
+
+p4: Glass 0.35-0.55, Pad 0.042-0.085.
+
+Return only i-statements, one per line.
+Each line MUST use a quoted name: i "Glass" start dur amp freq (or i "Pad").
+Never write numeric instruments (i1, i2, i3, ...).
+No comments, markdown, f-statements, or e-statement.
