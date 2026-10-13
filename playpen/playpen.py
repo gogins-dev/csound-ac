@@ -679,7 +679,7 @@ def csd_audio():
 def csd_soundfile():
     try:
         print(f"\ncsd_soundfile: {composition_filepath} to {rendered_audio_filename}...")
-        csound_command = f"csound {composition_filepath} -RWo{rendered_audio_filename} --simple-sorted-score={composition_filepath}.srt"
+        csound_command = f"csound {composition_filepath} -RWo{rendered_audio_filename}"
         print(f"csound command: {csound_command}")
         result = subprocess.run(csound_command, shell=True)
         print(f"csd_soundfile result: {result}")
