@@ -4,7 +4,12 @@ set -euo pipefail
 
 CSOUND_SOURCE="$HOME/csound"
 CSOUND_BUILD="$CSOUND_SOURCE/build"
-CSOUND_FRAMEWORK="$HOME/Library/Frameworks/CsoundLib64.framework/Versions/7.0/CsoundLib64"
+# Same locations as the macOS installer: framework in /Library/Frameworks,
+# csound executable in /usr/local/bin. The framework id stays @rpath, and
+# dependents find it through an rpath of /Library/Frameworks.
+CSOUND_INSTALL_PREFIX="/usr/local"
+CSOUND_FRAMEWORK_DEST="/Library/Frameworks"
+CSOUND_FRAMEWORK="${CSOUND_FRAMEWORK_DEST}/CsoundLib64.framework/Versions/7.0/CsoundLib64"
 
 echo
 echo "============================================================"
@@ -52,6 +57,8 @@ cmake \
     -S "$CSOUND_SOURCE" \
     -B "$CSOUND_BUILD" \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DCMAKE_INSTALL_PREFIX="${CSOUND_INSTALL_PREFIX}" \
+    -DCS_FRAMEWORK_DEST="${CSOUND_FRAMEWORK_DEST}" \
     -DUSE_ASA=OFF
 
 #
@@ -93,8 +100,9 @@ echo "Building Csound with $JOBS parallel jobs..."
 cmake --build "$CSOUND_BUILD" --parallel "$JOBS"
 
 #
-# Install. The Csound macOS configuration installs the framework into
-# ~/Library/Frameworks.
+# Install into /Library/Frameworks and /usr/local, matching a downloaded
+# Csound. CS_FRAMEWORK_DEST is also the install rpath of the csound binary
+# and the framework.
 #
 echo
 echo "Installing Csound..."

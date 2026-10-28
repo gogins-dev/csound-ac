@@ -15,7 +15,8 @@
 # the build. csound-wasm's own build then resets its csound submodule to
 # origin/develop and its csound-ac submodule to origin/master.
 #
-# Step 1 installs Csound 7 into ~/Library/Frameworks.
+# Step 1 installs Csound 7 into /Library/Frameworks and /usr/local/bin,
+# the same places as a downloaded macOS installer.
 # Step 2 installs the CsoundAC Python extension into Homebrew site-packages
 # and, when the csound venv exists, into that venv as well.
 # Mach-O release archives (CsoundAC, cxx-opcodes, vst3-opcodes, CsoundVST3)
@@ -93,7 +94,7 @@ require_head() {
 }
 
 verify_csound7_installed() {
-    local framework="${HOME}/Library/Frameworks/CsoundLib64.framework/Versions/7.0/CsoundLib64"
+    local framework="/Library/Frameworks/CsoundLib64.framework/Versions/7.0/CsoundLib64"
     if [[ ! -x "$framework" ]]; then
         echo "ERROR: Csound 7 framework was not installed at ${framework}" >&2
         exit 1
@@ -140,7 +141,6 @@ require_writable "${HOME}/csound-vst3"
 require_writable "${HOME}/csound-nwjs"
 require_writable "${HOME}/csound-wasm"
 require_writable "${HOME}/cloud-5"
-require_writable "${HOME}/Library/Frameworks"
 
 require_head "${HOME}/csound" develop
 require_head "${root}" master
