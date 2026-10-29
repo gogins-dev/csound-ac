@@ -36,7 +36,7 @@ This file is part of CsoundAC and is licensed under the terms of the
 GNU Lesser General Public License, version 2.1 or later.
 </CsLicense>
 <CsOptions>
--d -m163 -odac
+-d -m162 -odac
 </CsOptions>
 <CsInstruments>
 sr = 48000
@@ -1516,7 +1516,7 @@ i_frequency = cpsmidinn(i_midi_key)
 ; Velocity as a fraction, used by the synthesis for timbre changes.
 i_velocity = p5 / 127
 ; Adjust the following value until "overall amps" at the end of performance is about -6 dB.
-i_level_correction = 74.0
+i_level_correction = 64.0
 i_normalization = ampdb(-i_level_correction) / 2
 i_amplitude = ampdb(i_midi_velocity) * i_normalization
 k_gain = ampdb(gk_GM_Tubular_Bells_level)
@@ -1547,51 +1547,46 @@ a_noise rand 1
 a_strike_envelope transeg 1, 0.006, -4, 0
 a_strike butterlp a_noise * a_strike_envelope, limit(3000 * i_mallet_hardness * (0.6 + 0.8 * i_velocity), 200, 18000)
 a_signal = a_strike * 0.4
-i_f1 = i_frequency * 0.56 * (1 + random:i(-0.0006, 0.0006))
-i_a1 = (i_f1 < 16000 ? 0.4 : 0)
+i_f1 = i_frequency * 1.0 * (1 + random:i(-0.0006, 0.0006))
+i_a1 = (i_f1 < 16000 ? 0.3 : 0)
 a_env1 transeg 1, i_decay * 1.0, -7, 0
 a_p1 poscil i_a1 * a_env1, i_f1, gi_GM_Tubular_Bells_sine
 a_signal = a_signal + a_p1
-i_f2 = i_frequency * 0.92 * (1 + random:i(-0.0006, 0.0006))
-i_a2 = (i_f2 < 16000 ? 0.27 : 0)
+i_f2 = i_frequency * 0.62 * (1 + random:i(-0.0006, 0.0006))
+i_a2 = (i_f2 < 16000 ? 0.15 : 0)
 a_env2 transeg 1, i_decay * 0.9, -7, 0
 a_p2 poscil i_a2 * a_env2, i_f2, gi_GM_Tubular_Bells_sine
 a_signal = a_signal + a_p2
-i_f3 = i_frequency * 1.19 * (1 + random:i(-0.0006, 0.0006))
-i_a3 = (i_f3 < 16000 ? 0.4 : 0)
-a_env3 transeg 1, i_decay * 0.65, -7, 0
+i_f3 = i_frequency * 1.21 * (1 + random:i(-0.0006, 0.0006))
+i_a3 = (i_f3 < 16000 ? 0.3 : 0)
+a_env3 transeg 1, i_decay * 0.8, -7, 0
 a_p3 poscil i_a3 * a_env3, i_f3, gi_GM_Tubular_Bells_sine
 a_signal = a_signal + a_p3
-i_f4 = i_frequency * 1.7 * (1 + random:i(-0.0006, 0.0006))
-i_a4 = (i_f4 < 16000 ? 0.7 : 0)
-a_env4 transeg 1, i_decay * 0.55, -7, 0
+i_f4 = i_frequency * 2.0 * (1 + random:i(-0.0006, 0.0006))
+i_a4 = (i_f4 < 16000 ? 1.0 : 0)
+a_env4 transeg 1, i_decay * 0.7, -7, 0
 a_p4 poscil i_a4 * a_env4, i_f4, gi_GM_Tubular_Bells_sine
 a_signal = a_signal + a_p4
-i_f5 = i_frequency * 2.0 * (1 + random:i(-0.0006, 0.0006))
-i_a5 = (i_f5 < 16000 ? 1.0 : 0)
-a_env5 transeg 1, i_decay * 0.33, -7, 0
+i_f5 = i_frequency * 2.99 * (1 + random:i(-0.0006, 0.0006))
+i_a5 = (i_f5 < 16000 ? 0.7 : 0)
+a_env5 transeg 1, i_decay * 0.5, -7, 0
 a_p5 poscil i_a5 * a_env5, i_f5, gi_GM_Tubular_Bells_sine
 a_signal = a_signal + a_p5
-i_f6 = i_frequency * 2.74 * (1 + random:i(-0.0006, 0.0006))
-i_a6 = (i_f6 < 16000 ? 0.65 : 0)
+i_f6 = i_frequency * 4.17 * (1 + random:i(-0.0006, 0.0006))
+i_a6 = (i_f6 < 16000 ? 0.5 : 0)
 a_env6 transeg 1, i_decay * 0.35, -7, 0
 a_p6 poscil i_a6 * a_env6, i_f6, gi_GM_Tubular_Bells_sine
 a_signal = a_signal + a_p6
-i_f7 = i_frequency * 3.0 * (1 + random:i(-0.0006, 0.0006))
-i_a7 = (i_f7 < 16000 ? 0.55 : 0)
+i_f7 = i_frequency * 5.56 * (1 + random:i(-0.0006, 0.0006))
+i_a7 = (i_f7 < 16000 ? 0.3 : 0)
 a_env7 transeg 1, i_decay * 0.25, -7, 0
 a_p7 poscil i_a7 * a_env7, i_f7, gi_GM_Tubular_Bells_sine
 a_signal = a_signal + a_p7
-i_f8 = i_frequency * 3.76 * (1 + random:i(-0.0006, 0.0006))
-i_a8 = (i_f8 < 16000 ? 0.5 : 0)
-a_env8 transeg 1, i_decay * 0.2, -7, 0
+i_f8 = i_frequency * 7.14 * (1 + random:i(-0.0006, 0.0006))
+i_a8 = (i_f8 < 16000 ? 0.15 : 0)
+a_env8 transeg 1, i_decay * 0.15, -7, 0
 a_p8 poscil i_a8 * a_env8, i_f8, gi_GM_Tubular_Bells_sine
 a_signal = a_signal + a_p8
-i_f9 = i_frequency * 4.07 * (1 + random:i(-0.0006, 0.0006))
-i_a9 = (i_f9 < 16000 ? 0.5 : 0)
-a_env9 transeg 1, i_decay * 0.15, -7, 0
-a_p9 poscil i_a9 * a_env9, i_f9, gi_GM_Tubular_Bells_sine
-a_signal = a_signal + a_p9
 a_signal dcblock a_signal, 0.9995
 a_signal = a_signal * i_amplitude * a_envelope * k_gain
 a_out_left, a_out_right pan2 a_signal, k_space_left_to_right
@@ -1843,8 +1838,8 @@ gk_GM_Rock_Organ_drive chnexport "gk_GM_Rock_Organ_drive", 3 ; Overdrive amount,
 gk_GM_Rock_Organ_level init 0
 gk_GM_Rock_Organ_midi_dynamic_range init 20
 gk_GM_Rock_Organ_space_left_to_right init 0.5
-gk_GM_Rock_Organ_rotary_rate init 6.5
-gk_GM_Rock_Organ_drive init 0.6
+gk_GM_Rock_Organ_rotary_rate init 5.5
+gk_GM_Rock_Organ_drive init 0.45
 gi_GM_Rock_Organ_sine ftgen 0, 0, 65537, 10, 1
 instr GM_Rock_Organ
 ; General MIDI program 19: Rock Organ.
@@ -1866,7 +1861,7 @@ i_frequency = cpsmidinn(i_midi_key)
 ; Velocity as a fraction, used by the synthesis for timbre changes.
 i_velocity = p5 / 127
 ; Adjust the following value until "overall amps" at the end of performance is about -6 dB.
-i_level_correction = 60.5
+i_level_correction = 53.1
 i_normalization = ampdb(-i_level_correction) / 2
 i_amplitude = ampdb(i_midi_velocity) * i_normalization
 k_gain = ampdb(gk_GM_Rock_Organ_level)
@@ -1878,7 +1873,7 @@ i_release = 0.03
 xtratim i_attack + i_release
 a_envelope cossegr 0, i_attack, 1, i_sustain, 1, i_release, 0
 
-a_rotary_lfo poscil 0.9, gk_GM_Rock_Organ_rotary_rate, gi_GM_Rock_Organ_sine
+a_rotary_lfo poscil 0.5, gk_GM_Rock_Organ_rotary_rate, gi_GM_Rock_Organ_sine
 a_signal = 0
 a_h0_5 poscil 1.0000, i_frequency * 0.5, gi_GM_Rock_Organ_sine ; 16'
 a_signal = a_signal + a_h0_5
@@ -1886,9 +1881,11 @@ a_h1_5 poscil 1.0000, i_frequency * 1.5, gi_GM_Rock_Organ_sine ; 5 1/3'
 a_signal = a_signal + a_h1_5
 a_h1 poscil 1.0000, i_frequency * 1, gi_GM_Rock_Organ_sine ; 8'
 a_signal = a_signal + a_h1
-a_h2 poscil 1.0000, i_frequency * 2, gi_GM_Rock_Organ_sine ; 4'
+a_h2 poscil 0.7500, i_frequency * 2, gi_GM_Rock_Organ_sine ; 4'
 a_signal = a_signal + a_h2
-a_h8 poscil 1.0000, i_frequency * 8, gi_GM_Rock_Organ_sine ; 1'
+a_h4 poscil 0.5000, i_frequency * 4, gi_GM_Rock_Organ_sine ; 2'
+a_signal = a_signal + a_h4
+a_h8 poscil 0.5000, i_frequency * 8, gi_GM_Rock_Organ_sine ; 1'
 a_signal = a_signal + a_h8
 ; Key click.
 a_click_noise rand 1
@@ -1901,6 +1898,9 @@ a_signal = a_signal + a_leak
 if i_drive > 0 then
 a_signal = tanh(a_signal * (1 + 4 * i_drive)) / (1 + i_drive)
 endif
+; Speaker cabinet: rolls off the harmonics added by the overdrive.
+a_signal tonex a_signal, 4500, 2
+a_signal butterhp a_signal, 60
 ; Rotary speaker: a modulated delay mixed with the direct sound.
 a_rotary vdelay3 a_signal, 4 + a_rotary_lfo, 20
 a_signal = (a_signal + a_rotary) * 0.5
@@ -1942,7 +1942,7 @@ i_frequency = cpsmidinn(i_midi_key)
 ; Velocity as a fraction, used by the synthesis for timbre changes.
 i_velocity = p5 / 127
 ; Adjust the following value until "overall amps" at the end of performance is about -6 dB.
-i_level_correction = 65.4
+i_level_correction = 54.9
 i_normalization = ampdb(-i_level_correction) / 2
 i_amplitude = ampdb(i_midi_velocity) * i_normalization
 k_gain = ampdb(gk_GM_Church_Organ_level)
@@ -1957,27 +1957,27 @@ a_envelope cossegr 0, i_attack, 1, i_sustain, 1, i_release, 0
 k_wind jitter i(gk_GM_Church_Organ_wind), 1, 5
 k_frequency = i_frequency * (1 + k_wind)
 a_signal = 0
-i_nh1 = int(limit(sr / 2.2 / (i_frequency * 1), 1, 40))
-a_rank1 gbuzz 0.5, k_frequency * 1, i_nh1, 1, 0.75, gi_GM_Church_Organ_cosine
+i_nh1 = int(limit(sr / 2.2 / (i_frequency * 1), 1, 20))
+a_rank1 gbuzz 0.5, k_frequency * 1, i_nh1, 1, 0.6, gi_GM_Church_Organ_cosine
 a_signal = a_signal + a_rank1
-i_nh2 = int(limit(sr / 2.2 / (i_frequency * 2), 1, 40))
-a_rank2 gbuzz 0.35, k_frequency * 2, i_nh2, 1, 0.7, gi_GM_Church_Organ_cosine
+i_nh2 = int(limit(sr / 2.2 / (i_frequency * 2), 1, 20))
+a_rank2 gbuzz 0.3, k_frequency * 2, i_nh2, 1, 0.55, gi_GM_Church_Organ_cosine
 a_signal = a_signal + a_rank2
-i_nh3 = int(limit(sr / 2.2 / (i_frequency * 0.5), 1, 40))
-a_rank3 gbuzz 0.3, k_frequency * 0.5, i_nh3, 1, 0.6, gi_GM_Church_Organ_cosine
+i_nh3 = int(limit(sr / 2.2 / (i_frequency * 0.5), 1, 20))
+a_rank3 gbuzz 0.3, k_frequency * 0.5, i_nh3, 1, 0.5, gi_GM_Church_Organ_cosine
 a_signal = a_signal + a_rank3
-i_nh4 = int(limit(sr / 2.2 / (i_frequency * 4), 1, 40))
-a_rank4 gbuzz 0.15, k_frequency * 4, i_nh4, 1, 0.6, gi_GM_Church_Organ_cosine
+i_nh4 = int(limit(sr / 2.2 / (i_frequency * 4), 1, 20))
+a_rank4 gbuzz 0.1, k_frequency * 4, i_nh4, 1, 0.45, gi_GM_Church_Organ_cosine
 a_signal = a_signal + a_rank4
-i_nh5 = int(limit(sr / 2.2 / (i_frequency * 3), 1, 40))
-a_rank5 gbuzz 0.12, k_frequency * 3, i_nh5, 1, 0.5, gi_GM_Church_Organ_cosine
+i_nh5 = int(limit(sr / 2.2 / (i_frequency * 3), 1, 20))
+a_rank5 gbuzz 0.08, k_frequency * 3, i_nh5, 1, 0.4, gi_GM_Church_Organ_cosine
 a_signal = a_signal + a_rank5
 ; Chiff: band-passed noise around the second harmonic at the attack.
 a_chiff_noise rand 1
-a_chiff_envelope transeg 0, 0.01, 2, 0.4, 0.06, -3, 0
+a_chiff_envelope transeg 0, 0.01, 2, 0.25, 0.06, -3, 0
 a_chiff butterbp a_chiff_noise * a_chiff_envelope, limit(i_frequency * 2, 100, 12000), limit(i_frequency, 50, 4000)
 a_signal = a_signal + a_chiff
-a_signal tonex a_signal, limit(i_frequency * 12, 2000, 16000), 1
+a_signal tonex a_signal, limit(i_frequency * 8, 2000, 9000), 2
 a_signal dcblock a_signal, 0.9995
 a_signal = a_signal * i_amplitude * a_envelope * k_gain
 a_out_left, a_out_right pan2 a_signal, k_space_left_to_right
@@ -4449,8 +4449,8 @@ gk_GM_Choir_Aahs_vibrato_rate chnexport "gk_GM_Choir_Aahs_vibrato_rate", 3 ; Vib
 gk_GM_Choir_Aahs_level init 0
 gk_GM_Choir_Aahs_midi_dynamic_range init 20
 gk_GM_Choir_Aahs_space_left_to_right init 0.5
-gk_GM_Choir_Aahs_vibrato_depth init 0.3
-gk_GM_Choir_Aahs_vibrato_rate init 5.0
+gk_GM_Choir_Aahs_vibrato_depth init 0.25
+gk_GM_Choir_Aahs_vibrato_rate init 4.8
 gi_GM_Choir_Aahs_sine ftgen 0, 0, 65537, 10, 1
 gi_GM_Choir_Aahs_sigmoid ftgen 0, 0, 1024, 19, 0.5, 0.5, 270, 0.5
 instr GM_Choir_Aahs
@@ -4473,59 +4473,98 @@ i_frequency = cpsmidinn(i_midi_key)
 ; Velocity as a fraction, used by the synthesis for timbre changes.
 i_velocity = p5 / 127
 ; Adjust the following value until "overall amps" at the end of performance is about -6 dB.
-i_level_correction = 65.9
+i_level_correction = 56.7
 i_normalization = ampdb(-i_level_correction) / 2
 i_amplitude = ampdb(i_midi_velocity) * i_normalization
 k_gain = ampdb(gk_GM_Choir_Aahs_level)
 ; Formant synthesis (FOF): several detuned voices, each with five vowel
 ; formants, plus a little breath noise.
-i_attack = 0.25
-i_release = 0.3
+i_attack = 0.35
+i_release = 0.4
 xtratim i_attack + i_release
 a_envelope cossegr 0, i_attack, 1, p3, 1, i_release, 0
 i_total_duration = (p3 > 0 ? p3 + i_release : 3600)
-k_vibrato_envelope linseg 0, 0.4, 0, 0.6, 1, 1, 1
+k_vibrato_envelope linseg 0, 0.5, 0, 0.6, 1, 1, 1
 k_vibrato vibr gk_GM_Choir_Aahs_vibrato_depth * k_vibrato_envelope, gk_GM_Choir_Aahs_vibrato_rate, gi_GM_Choir_Aahs_sine
 k_frequency = i_frequency * 2 ^ (k_vibrato / 12)
-k_sweep = 1
+; The vowel opens during the onset: formants glide up into place.
+k_sweep linseg 0.8, 0.35 * 1.3, 1, 1, 1
 a_signal = 0
-a_v1_f1 fof 1.0000, k_frequency * 1.0, 800 * k_sweep, 0, 80, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+; Voice 1: its own vibrato rate and a slow pitch drift, so the
+; singers do not move in lock step.
+k_vibrato_1 vibr gk_GM_Choir_Aahs_vibrato_depth * k_vibrato_envelope, gk_GM_Choir_Aahs_vibrato_rate * 1.0, gi_GM_Choir_Aahs_sine
+k_drift_1 jitter 0.1, 0.2, 0.9
+k_frequency_1 = i_frequency * 1.0 * 2 ^ ((k_vibrato_1 + k_drift_1) / 12)
+a_v1_f1 fof 1.0000, k_frequency_1, 800 * k_sweep, 0, 80, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v1_f1
-a_v1_f2 fof 0.6310, k_frequency * 1.0, 1150 * k_sweep, 0, 90, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v1_f2 fof 0.6310, k_frequency_1, 1150 * k_sweep, 0, 90, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v1_f2
-a_v1_f3 fof 0.1000, k_frequency * 1.0, 2800 * k_sweep, 0, 120, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v1_f3 fof 0.1000, k_frequency_1, 2800 * k_sweep, 0, 120, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v1_f3
-a_v1_f4 fof 0.0158, k_frequency * 1.0, 3500 * k_sweep, 0, 130, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v1_f4 fof 0.0158, k_frequency_1, 3500 * k_sweep, 0, 130, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v1_f4
-a_v1_f5 fof 0.0010, k_frequency * 1.0, 4950 * k_sweep, 0, 140, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v1_f5 fof 0.0010, k_frequency_1, 4950 * k_sweep, 0, 140, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v1_f5
-a_v2_f1 fof 0.8000, k_frequency * 1.004, 800 * k_sweep, 0, 80, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+; Voice 2: its own vibrato rate and a slow pitch drift, so the
+; singers do not move in lock step.
+k_vibrato_2 vibr gk_GM_Choir_Aahs_vibrato_depth * k_vibrato_envelope, gk_GM_Choir_Aahs_vibrato_rate * 0.93, gi_GM_Choir_Aahs_sine
+k_drift_2 jitter 0.1, 0.2, 0.9
+k_frequency_2 = i_frequency * 1.005 * 2 ^ ((k_vibrato_2 + k_drift_2) / 12)
+a_v2_f1 fof 0.8000, k_frequency_2, 800 * k_sweep, 0, 80, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v2_f1
-a_v2_f2 fof 0.5048, k_frequency * 1.004, 1150 * k_sweep, 0, 90, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v2_f2 fof 0.5048, k_frequency_2, 1150 * k_sweep, 0, 90, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v2_f2
-a_v2_f3 fof 0.0800, k_frequency * 1.004, 2800 * k_sweep, 0, 120, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v2_f3 fof 0.0800, k_frequency_2, 2800 * k_sweep, 0, 120, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v2_f3
-a_v2_f4 fof 0.0127, k_frequency * 1.004, 3500 * k_sweep, 0, 130, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v2_f4 fof 0.0127, k_frequency_2, 3500 * k_sweep, 0, 130, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v2_f4
-a_v2_f5 fof 0.0008, k_frequency * 1.004, 4950 * k_sweep, 0, 140, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v2_f5 fof 0.0008, k_frequency_2, 4950 * k_sweep, 0, 140, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v2_f5
-a_v3_f1 fof 0.8000, k_frequency * 0.9965, 800 * k_sweep, 0, 80, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+; Voice 3: its own vibrato rate and a slow pitch drift, so the
+; singers do not move in lock step.
+k_vibrato_3 vibr gk_GM_Choir_Aahs_vibrato_depth * k_vibrato_envelope, gk_GM_Choir_Aahs_vibrato_rate * 1.09, gi_GM_Choir_Aahs_sine
+k_drift_3 jitter 0.1, 0.2, 0.9
+k_frequency_3 = i_frequency * 0.9955 * 2 ^ ((k_vibrato_3 + k_drift_3) / 12)
+a_v3_f1 fof 0.8000, k_frequency_3, 800 * k_sweep, 0, 80, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v3_f1
-a_v3_f2 fof 0.5048, k_frequency * 0.9965, 1150 * k_sweep, 0, 90, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v3_f2 fof 0.5048, k_frequency_3, 1150 * k_sweep, 0, 90, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v3_f2
-a_v3_f3 fof 0.0800, k_frequency * 0.9965, 2800 * k_sweep, 0, 120, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v3_f3 fof 0.0800, k_frequency_3, 2800 * k_sweep, 0, 120, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v3_f3
-a_v3_f4 fof 0.0127, k_frequency * 0.9965, 3500 * k_sweep, 0, 130, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v3_f4 fof 0.0127, k_frequency_3, 3500 * k_sweep, 0, 130, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v3_f4
-a_v3_f5 fof 0.0008, k_frequency * 0.9965, 4950 * k_sweep, 0, 140, 0.003, 0.02, 0.007, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_v3_f5 fof 0.0008, k_frequency_3, 4950 * k_sweep, 0, 140, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
 a_signal = a_signal + a_v3_f5
+; Voice 4: its own vibrato rate and a slow pitch drift, so the
+; singers do not move in lock step.
+k_vibrato_4 vibr gk_GM_Choir_Aahs_vibrato_depth * k_vibrato_envelope, gk_GM_Choir_Aahs_vibrato_rate * 0.87, gi_GM_Choir_Aahs_sine
+k_drift_4 jitter 0.1, 0.2, 0.9
+k_frequency_4 = i_frequency * 2.004 * 2 ^ ((k_vibrato_4 + k_drift_4) / 12)
+a_v4_f1 fof 0.2500, k_frequency_4, 800 * k_sweep, 0, 80, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_signal = a_signal + a_v4_f1
+a_v4_f2 fof 0.1577, k_frequency_4, 1150 * k_sweep, 0, 90, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_signal = a_signal + a_v4_f2
+a_v4_f3 fof 0.0250, k_frequency_4, 2800 * k_sweep, 0, 120, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_signal = a_signal + a_v4_f3
+a_v4_f4 fof 0.0040, k_frequency_4, 3500 * k_sweep, 0, 130, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_signal = a_signal + a_v4_f4
+a_v4_f5 fof 0.0003, k_frequency_4, 4950 * k_sweep, 0, 140, 0.008, 0.035, 0.012, 60, gi_GM_Choir_Aahs_sine, gi_GM_Choir_Aahs_sigmoid, i_total_duration
+a_signal = a_signal + a_v4_f5
 ; The level of formant synthesis depends on how the harmonics line up
 ; with the formants, so hold the loudness steady against a reference.
 a_reference poscil 0.6, 100, gi_GM_Choir_Aahs_sine
 a_signal balance a_signal, a_reference, 4
-a_breath_noise rand 1
-a_breath butterbp a_breath_noise, 2500, 2000
-a_signal = a_signal + a_breath * 0.02
+; Breath through the mouth formants, and a gentle widening chorus.
+a_breath_source rand 1
+a_breath_1 reson a_breath_source, 800 * k_sweep, 800 * 0.3, 1
+a_breath_2 reson a_breath_source, 1150 * k_sweep, 1150 * 0.3, 1
+a_signal = a_signal + (a_breath_1 + a_breath_2 * 0.5) * 0.03
+a_chorus_lfo_1 poscil 1.2, 0.31, gi_GM_Choir_Aahs_sine
+a_chorus_lfo_2 poscil 1.2, 0.47, gi_GM_Choir_Aahs_sine
+a_chorus_1 vdelay3 a_signal, 16 + a_chorus_lfo_1, 40
+a_chorus_2 vdelay3 a_signal, 23 + a_chorus_lfo_2, 40
+a_signal = a_signal * 0.6 + (a_chorus_1 + a_chorus_2) * 0.3
+a_signal tonex a_signal, 6000, 1
 a_signal dcblock a_signal, 0.9995
 a_signal = a_signal * i_amplitude * a_envelope * k_gain
 a_out_left, a_out_right pan2 a_signal, k_space_left_to_right
@@ -4543,8 +4582,8 @@ gk_GM_Voice_Oohs_vibrato_rate chnexport "gk_GM_Voice_Oohs_vibrato_rate", 3 ; Vib
 gk_GM_Voice_Oohs_level init 0
 gk_GM_Voice_Oohs_midi_dynamic_range init 20
 gk_GM_Voice_Oohs_space_left_to_right init 0.5
-gk_GM_Voice_Oohs_vibrato_depth init 0.3
-gk_GM_Voice_Oohs_vibrato_rate init 5.0
+gk_GM_Voice_Oohs_vibrato_depth init 0.25
+gk_GM_Voice_Oohs_vibrato_rate init 4.8
 gi_GM_Voice_Oohs_sine ftgen 0, 0, 65537, 10, 1
 gi_GM_Voice_Oohs_sigmoid ftgen 0, 0, 1024, 19, 0.5, 0.5, 270, 0.5
 instr GM_Voice_Oohs
@@ -4567,59 +4606,83 @@ i_frequency = cpsmidinn(i_midi_key)
 ; Velocity as a fraction, used by the synthesis for timbre changes.
 i_velocity = p5 / 127
 ; Adjust the following value until "overall amps" at the end of performance is about -6 dB.
-i_level_correction = 65.4
+i_level_correction = 57.0
 i_normalization = ampdb(-i_level_correction) / 2
 i_amplitude = ampdb(i_midi_velocity) * i_normalization
 k_gain = ampdb(gk_GM_Voice_Oohs_level)
 ; Formant synthesis (FOF): several detuned voices, each with five vowel
 ; formants, plus a little breath noise.
-i_attack = 0.25
-i_release = 0.3
+i_attack = 0.35
+i_release = 0.4
 xtratim i_attack + i_release
 a_envelope cossegr 0, i_attack, 1, p3, 1, i_release, 0
 i_total_duration = (p3 > 0 ? p3 + i_release : 3600)
-k_vibrato_envelope linseg 0, 0.4, 0, 0.6, 1, 1, 1
+k_vibrato_envelope linseg 0, 0.5, 0, 0.6, 1, 1, 1
 k_vibrato vibr gk_GM_Voice_Oohs_vibrato_depth * k_vibrato_envelope, gk_GM_Voice_Oohs_vibrato_rate, gi_GM_Voice_Oohs_sine
 k_frequency = i_frequency * 2 ^ (k_vibrato / 12)
-k_sweep = 1
+; The vowel opens during the onset: formants glide up into place.
+k_sweep linseg 0.8, 0.35 * 1.3, 1, 1, 1
 a_signal = 0
-a_v1_f1 fof 1.0000, k_frequency * 1.0, 450 * k_sweep, 0, 70, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+; Voice 1: its own vibrato rate and a slow pitch drift, so the
+; singers do not move in lock step.
+k_vibrato_1 vibr gk_GM_Voice_Oohs_vibrato_depth * k_vibrato_envelope, gk_GM_Voice_Oohs_vibrato_rate * 1.0, gi_GM_Voice_Oohs_sine
+k_drift_1 jitter 0.1, 0.2, 0.9
+k_frequency_1 = i_frequency * 1.0 * 2 ^ ((k_vibrato_1 + k_drift_1) / 12)
+a_v1_f1 fof 1.0000, k_frequency_1, 450 * k_sweep, 0, 70, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v1_f1
-a_v1_f2 fof 0.3548, k_frequency * 1.0, 800 * k_sweep, 0, 80, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v1_f2 fof 0.3548, k_frequency_1, 800 * k_sweep, 0, 80, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v1_f2
-a_v1_f3 fof 0.1585, k_frequency * 1.0, 2830 * k_sweep, 0, 100, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v1_f3 fof 0.1585, k_frequency_1, 2830 * k_sweep, 0, 100, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v1_f3
-a_v1_f4 fof 0.0398, k_frequency * 1.0, 3500 * k_sweep, 0, 130, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v1_f4 fof 0.0398, k_frequency_1, 3500 * k_sweep, 0, 130, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v1_f4
-a_v1_f5 fof 0.0018, k_frequency * 1.0, 4950 * k_sweep, 0, 135, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v1_f5 fof 0.0018, k_frequency_1, 4950 * k_sweep, 0, 135, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v1_f5
-a_v2_f1 fof 0.8000, k_frequency * 1.004, 450 * k_sweep, 0, 70, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+; Voice 2: its own vibrato rate and a slow pitch drift, so the
+; singers do not move in lock step.
+k_vibrato_2 vibr gk_GM_Voice_Oohs_vibrato_depth * k_vibrato_envelope, gk_GM_Voice_Oohs_vibrato_rate * 0.93, gi_GM_Voice_Oohs_sine
+k_drift_2 jitter 0.1, 0.2, 0.9
+k_frequency_2 = i_frequency * 1.005 * 2 ^ ((k_vibrato_2 + k_drift_2) / 12)
+a_v2_f1 fof 0.8000, k_frequency_2, 450 * k_sweep, 0, 70, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v2_f1
-a_v2_f2 fof 0.2839, k_frequency * 1.004, 800 * k_sweep, 0, 80, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v2_f2 fof 0.2839, k_frequency_2, 800 * k_sweep, 0, 80, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v2_f2
-a_v2_f3 fof 0.1268, k_frequency * 1.004, 2830 * k_sweep, 0, 100, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v2_f3 fof 0.1268, k_frequency_2, 2830 * k_sweep, 0, 100, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v2_f3
-a_v2_f4 fof 0.0318, k_frequency * 1.004, 3500 * k_sweep, 0, 130, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v2_f4 fof 0.0318, k_frequency_2, 3500 * k_sweep, 0, 130, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v2_f4
-a_v2_f5 fof 0.0014, k_frequency * 1.004, 4950 * k_sweep, 0, 135, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v2_f5 fof 0.0014, k_frequency_2, 4950 * k_sweep, 0, 135, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v2_f5
-a_v3_f1 fof 0.8000, k_frequency * 0.9965, 450 * k_sweep, 0, 70, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+; Voice 3: its own vibrato rate and a slow pitch drift, so the
+; singers do not move in lock step.
+k_vibrato_3 vibr gk_GM_Voice_Oohs_vibrato_depth * k_vibrato_envelope, gk_GM_Voice_Oohs_vibrato_rate * 1.09, gi_GM_Voice_Oohs_sine
+k_drift_3 jitter 0.1, 0.2, 0.9
+k_frequency_3 = i_frequency * 0.9955 * 2 ^ ((k_vibrato_3 + k_drift_3) / 12)
+a_v3_f1 fof 0.8000, k_frequency_3, 450 * k_sweep, 0, 70, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v3_f1
-a_v3_f2 fof 0.2839, k_frequency * 0.9965, 800 * k_sweep, 0, 80, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v3_f2 fof 0.2839, k_frequency_3, 800 * k_sweep, 0, 80, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v3_f2
-a_v3_f3 fof 0.1268, k_frequency * 0.9965, 2830 * k_sweep, 0, 100, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v3_f3 fof 0.1268, k_frequency_3, 2830 * k_sweep, 0, 100, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v3_f3
-a_v3_f4 fof 0.0318, k_frequency * 0.9965, 3500 * k_sweep, 0, 130, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v3_f4 fof 0.0318, k_frequency_3, 3500 * k_sweep, 0, 130, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v3_f4
-a_v3_f5 fof 0.0014, k_frequency * 0.9965, 4950 * k_sweep, 0, 135, 0.003, 0.02, 0.007, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
+a_v3_f5 fof 0.0014, k_frequency_3, 4950 * k_sweep, 0, 135, 0.008, 0.035, 0.012, 60, gi_GM_Voice_Oohs_sine, gi_GM_Voice_Oohs_sigmoid, i_total_duration
 a_signal = a_signal + a_v3_f5
 ; The level of formant synthesis depends on how the harmonics line up
 ; with the formants, so hold the loudness steady against a reference.
 a_reference poscil 0.6, 100, gi_GM_Voice_Oohs_sine
 a_signal balance a_signal, a_reference, 4
-a_breath_noise rand 1
-a_breath butterbp a_breath_noise, 2500, 2000
-a_signal = a_signal + a_breath * 0.02
+; Breath through the mouth formants, and a gentle widening chorus.
+a_breath_source rand 1
+a_breath_1 reson a_breath_source, 450 * k_sweep, 450 * 0.3, 1
+a_breath_2 reson a_breath_source, 800 * k_sweep, 800 * 0.3, 1
+a_signal = a_signal + (a_breath_1 + a_breath_2 * 0.5) * 0.03
+a_chorus_lfo_1 poscil 1.2, 0.31, gi_GM_Voice_Oohs_sine
+a_chorus_lfo_2 poscil 1.2, 0.47, gi_GM_Voice_Oohs_sine
+a_chorus_1 vdelay3 a_signal, 16 + a_chorus_lfo_1, 40
+a_chorus_2 vdelay3 a_signal, 23 + a_chorus_lfo_2, 40
+a_signal = a_signal * 0.6 + (a_chorus_1 + a_chorus_2) * 0.3
+a_signal tonex a_signal, 6000, 1
 a_signal dcblock a_signal, 0.9995
 a_signal = a_signal * i_amplitude * a_envelope * k_gain
 a_out_left, a_out_right pan2 a_signal, k_space_left_to_right
@@ -4812,6 +4875,7 @@ gk_GM_Trumpet_index init 5.0
 gk_GM_Trumpet_vibrato_depth init 0.2
 gk_GM_Trumpet_vibrato_rate init 5.5
 gi_GM_Trumpet_sine ftgen 0, 0, 65537, 10, 1
+gi_GM_Trumpet_cosine ftgen 0, 0, 65537, 11, 1
 instr GM_Trumpet
 ; General MIDI program 57: Trumpet.
 i_instrument = p1
@@ -4832,7 +4896,7 @@ i_frequency = cpsmidinn(i_midi_key)
 ; Velocity as a fraction, used by the synthesis for timbre changes.
 i_velocity = p5 / 127
 ; Adjust the following value until "overall amps" at the end of performance is about -6 dB.
-i_level_correction = 65.0
+i_level_correction = 51.2
 i_normalization = ampdb(-i_level_correction) / 2
 i_amplitude = ampdb(i_midi_velocity) * i_normalization
 k_gain = ampdb(gk_GM_Trumpet_level)
@@ -4854,6 +4918,18 @@ k_frequency = i_frequency * 2 ^ ((k_vibrato + k_slur) / 12)
 a_signal = 0
 a_voice1 foscili 1.0, k_frequency * 1.0, 1, 1, k_index, gi_GM_Trumpet_sine
 a_signal = a_signal + a_voice1
+; The main body of the tone is a band-limited pulse whose harmonic
+; roll-off follows the loudness (louder is brighter), coloured by the
+; bell's formants. The FM voice above is kept only as a quiet edge.
+k_envelope = k(a_envelope)
+k_brightness transeg 0.3, i_attack, 2, 1.15, 0.15, -3, 1, 1, 0, 1
+k_mul = limit((0.5 + 0.35 * i_velocity) * k_brightness * (0.6 + 0.4 * k_envelope), 0.2, 0.92)
+i_nh = int(limit(sr / 2.2 / i_frequency, 1, 60))
+a_pulse gbuzz 1, k_frequency, i_nh, 1, k_mul, gi_GM_Trumpet_cosine
+a_formant_1 reson a_pulse, 1250, 1250 * 0.25, 1
+a_formant_2 reson a_pulse, 2500, 2500 * 0.3, 1
+a_body = a_pulse * 0.35 + a_formant_1 * 0.5 + a_formant_2 * 0.25
+a_signal = a_body + a_signal * 0.25
 a_breath_noise rand 1
 a_breath butterbp a_breath_noise, limit(i_frequency * 4, 300, 8000), limit(i_frequency * 2, 200, 4000)
 a_signal = a_signal + a_breath * 0.02
