@@ -319,11 +319,15 @@ gk_GM_Acoustic_Grand_Piano_midi_dynamic_range chnexport "gk_GM_Acoustic_Grand_Pi
 gk_GM_Acoustic_Grand_Piano_space_left_to_right chnexport "gk_GM_Acoustic_Grand_Piano_space_left_to_right", 3 ; Default pan position when p7 is 0.
 gk_GM_Acoustic_Grand_Piano_brightness chnexport "gk_GM_Acoustic_Grand_Piano_brightness", 3 ; Multiplies the hammer brightness.
 gk_GM_Acoustic_Grand_Piano_decay_scale chnexport "gk_GM_Acoustic_Grand_Piano_decay_scale", 3 ; Multiplies the string decay time.
-gk_GM_Acoustic_Grand_Piano_level init 0
+gk_GM_Acoustic_Grand_Piano_soundboard chnexport "gk_GM_Acoustic_Grand_Piano_soundboard", 3 ; Level of the soundboard resonances.
+gk_GM_Acoustic_Grand_Piano_string_detune chnexport "gk_GM_Acoustic_Grand_Piano_string_detune", 3 ; Multiplies the detuning between the strings of a key.
+gk_GM_Acoustic_Grand_Piano_level init -7
 gk_GM_Acoustic_Grand_Piano_midi_dynamic_range init 20
 gk_GM_Acoustic_Grand_Piano_space_left_to_right init 0.5
 gk_GM_Acoustic_Grand_Piano_brightness init 1.0
 gk_GM_Acoustic_Grand_Piano_decay_scale init 1.0
+gk_GM_Acoustic_Grand_Piano_soundboard init 1.0
+gk_GM_Acoustic_Grand_Piano_string_detune init 1.0
 gi_GM_Acoustic_Grand_Piano_sine ftgen 0, 0, 65537, 10, 1
 instr GM_Acoustic_Grand_Piano
 ; General MIDI program 1: Acoustic Grand Piano.
@@ -345,55 +349,148 @@ i_frequency = cpsmidinn(i_midi_key)
 ; Velocity as a fraction, used by the synthesis for timbre changes.
 i_velocity = p5 / 127
 ; Adjust the following value until "overall amps" at the end of performance is about -6 dB.
-i_level_correction = 65.6
+i_level_correction = 56.6
 i_normalization = ampdb(-i_level_correction) / 2
 i_amplitude = ampdb(i_midi_velocity) * i_normalization
 k_gain = ampdb(gk_GM_Acoustic_Grand_Piano_level)
-; Three detuned FM strings per key. The modulation index, the
-; low-pass brightness, and the decay time all depend on key and velocity.
-i_decay_scale = i(gk_GM_Acoustic_Grand_Piano_decay_scale)
+; Physical model. A felt hammer (a stack of raised-cosine force pulses
+; of decreasing width, so the spectrum rolls off smoothly and gets
+; brighter with velocity and towards the treble, striking at one eighth
+; of the string) excites three slightly detuned waveguide strings
+; (wguide1: delay line, one-pole damping filter, feedback). The feedback
+; is computed from the wanted decay time and the delay is corrected for
+; the filter's phase delay, so every string is exactly in tune. The first
+; arrival of the hammer pulse goes straight to the bridge, so the attack
+; is immediate. The bridge drives a soundboard: a radiation shelf, a bank
+; of low-Q modes excited mostly by the hammer knock, and a top roll-off.
 i_brightness = i(gk_GM_Acoustic_Grand_Piano_brightness)
-; Make indefinite notes last no longer than the physical decay.
-i_physical_decay = limit(14 * exp(-(i_midi_key - 21) / 36), 0.7, 14) * i_decay_scale
+i_decay_scale = i(gk_GM_Acoustic_Grand_Piano_decay_scale)
+i_soundboard = i(gk_GM_Acoustic_Grand_Piano_soundboard)
+i_string_detune = i(gk_GM_Acoustic_Grand_Piano_string_detune)
+; Decay time of the fundamental: long in the bass, short in the treble.
+i_physical_decay = limit(12 * 2 ^ (-(i_midi_key - 60) / 18), 0.5, 25) * i_decay_scale
 if p3 == -1 then
 i_duration = i_physical_decay
 else
 i_duration = p3
 endif
-i_attack = 0.0015
-i_exponent = 5
-; The physical envelope has a fixed decay that ends at zero.
-a_physical_envelope transeg 0, i_attack, i_exponent, 1, i_physical_decay, -i_exponent, 0
-; The de-clicking envelope damps the note when it is released.
-i_declick_release = 0.08
+; The strings decay on their own; this envelope only holds the note and
+; applies the damper when the key is released.
+i_declick_release = 0.09
 xtratim i_declick_release + 0.05
-a_declicking_envelope cossegr 0, i_attack, 1, i_duration, 1, i_declick_release, 0
-a_envelope = a_physical_envelope * a_declicking_envelope
-
-i_key_scale = limit(2 ^ ((60 - i_midi_key) / 24), 0.3, 2.5)
-i_index = (1.0 + 3.2 * i_velocity) * i_key_scale * i_brightness
-k_index transeg i_index, 0.25, -4, 0.3 * i_index + 0.15, i_physical_decay, -2, 0.05
-i_detune = limit(0.0007 + 0.0007 * (i_midi_key - 36) / 48, 0.0004, 0.0016)
-a_string_1 foscili 1, i_frequency * (1 - i_detune), 1, 1, k_index, gi_GM_Acoustic_Grand_Piano_sine
-a_string_2 foscili 1, i_frequency, 1, 1, k_index * 0.93, gi_GM_Acoustic_Grand_Piano_sine
-a_string_3 foscili 1, i_frequency * (1 + i_detune), 1, 1, k_index * 1.07, gi_GM_Acoustic_Grand_Piano_sine
-a_strings = (a_string_1 + a_string_2 + a_string_3) / 3
-; Inharmonic hammer sheen, fading quickly.
-k_sheen transeg 0.35 * (0.3 + i_velocity) * i_brightness, 0.09, -5, 0.03, 1, -1, 0
-a_sheen foscili 0.4, i_frequency, 1, 3.011, k_sheen, gi_GM_Acoustic_Grand_Piano_sine
-; Hammer thump: a short low-passed noise burst.
-a_noise rand 1
-a_hammer_envelope transeg 0.5 * i_velocity, 0.005, -3, 0
-a_hammer butterlp a_noise * a_hammer_envelope, 1200 + 3000 * i_velocity
-a_signal = a_strings + a_sheen * 1.0 + a_hammer
-; Brightness closes as the note decays.
-k_cutoff transeg (2200 + i_frequency * (3 + 5 * i_velocity)) * i_brightness, 0.4, -3, 1500 + i_frequency * 2.5, i_physical_decay, -1, 700 + i_frequency * 1.5
-k_cutoff limit k_cutoff, 200, 16000
-a_signal tonex a_signal, k_cutoff, 2
-; Soundboard resonances.
-a_body_1 reson a_signal, 230, 120, 1
-a_body_2 reson a_signal, 470, 180, 1
-a_signal = a_signal + 0.120 * a_body_1 + 0.080 * a_body_2
+a_physical_envelope transeg 1, i_physical_decay * 0.85, 0, 1, i_physical_decay * 0.15, -3, 0
+a_declicking_envelope cossegr 1, i_duration, 1, i_declick_release, 0
+; Two-stage decay: the "prompt sound" of the vertical string motion dies
+; faster than the "aftersound", so the first few hundred milliseconds
+; drop quickly before the slow decay takes over.
+a_prompt_envelope transeg 1, 0.3, -3, 0.55, i_physical_decay, 0, 0.55
+a_envelope = a_physical_envelope * a_declicking_envelope * a_prompt_envelope
+; Hammer force pulse: a few milliseconds in the bass, under a millisecond
+; in the treble, shorter for harder blows. Narrower pulses are stacked on
+; the main one with weights that grow with velocity (the felt hardens),
+; which fills in the upper partials without the notches of a single pulse.
+i_contact = limit(0.0024 * 2 ^ (-(i_midi_key - 36) / 24), 0.0004, 0.0028) * (1.2 - 0.4 * i_velocity)
+i_hardness = limit((0.2 + 0.6 * i_velocity) * i_brightness, 0.05, 0.95)
+a_pulse_1 cosseg 0, i_contact * 0.5, 1, i_contact * 0.5, 0, 1, 0
+a_pulse_2 cosseg 0, i_contact * 0.3, 1, i_contact * 0.3, 0, 1, 0
+a_pulse_3 cosseg 0, i_contact * 0.175, 1, i_contact * 0.175, 0, 1, 0
+a_pulse_4 cosseg 0, i_contact * 0.1, 1, i_contact * 0.1, 0, 1, 0
+a_hammer = a_pulse_1 + a_pulse_2 * i_hardness + a_pulse_3 * i_hardness * i_hardness + a_pulse_4 * i_hardness * i_hardness * i_hardness
+; The hammer strikes at about one eighth of the string length: the wave
+; reflected from the agraffe follows the direct wave, inverted.
+a_hammer_reflection delay a_hammer, 0.125 / i_frequency
+a_excitation = a_hammer - 0.75 * a_hammer_reflection
+; String damping filter: upper partials die faster, more so in the bass.
+i_cutoff = limit(3500 * 2 ^ ((i_midi_key - 48) / 12), 2500, 21000)
+; Detuning between the three strings, in cents, wider in the treble.
+i_detune_cents = (0.4 + 2.2 * (i_midi_key - 21) / 87) * i_string_detune
+; Exact tuning of wguide1: compensate for one sample of feedback latency
+; and the phase delay of its one-pole low-pass at the fundamental.
+i_b = 2 - cos(2 * $M_PI * i_cutoff / sr)
+i_c2 = i_b - sqrt(i_b * i_b - 1)
+i_c1 = 1 - i_c2
+i_omega = 2 * $M_PI * i_frequency / sr
+i_filter_delay = taninv(i_c2 * sin(i_omega) / (1 - i_c2 * cos(i_omega))) / i_omega
+i_filter_gain = i_c1 / sqrt(1 - 2 * i_c2 * cos(i_omega) + i_c2 * i_c2)
+; Feedback from the wanted decay time of the fundamental.
+i_period = sr / i_frequency
+i_feedback = limit(10 ^ (-3 * i_period / (i_physical_decay * sr)) / i_filter_gain, 0.5, 0.9995)
+i_frequency_1 = i_frequency * 2 ^ (-i_detune_cents / 1200)
+i_frequency_2 = i_frequency
+i_frequency_3 = i_frequency * 2 ^ (1.4 * i_detune_cents / 1200)
+i_wg_frequency_1 = sr / (sr / i_frequency_1 - 1 - i_filter_delay)
+i_wg_frequency_2 = sr / (sr / i_frequency_2 - 1 - i_filter_delay)
+i_wg_frequency_3 = sr / (sr / i_frequency_3 - 1 - i_filter_delay)
+a_string_1 wguide1 a_excitation, i_wg_frequency_1, i_cutoff, i_feedback
+a_string_2 wguide1 a_excitation, i_wg_frequency_2, i_cutoff, i_feedback
+a_string_3 wguide1 a_excitation, i_wg_frequency_3, i_cutoff, i_feedback
+; wguide1 only outputs after one round trip; the first arrival of the
+; pulse at the bridge is added directly so the attack is instantaneous.
+if i_midi_key < 40 then
+a_strings = (a_string_2 + a_excitation) * 1.5
+elseif i_midi_key < 52 then
+a_strings = (a_string_1 + a_string_3 + 2 * a_excitation) * 0.8
+else
+; Unequal string levels keep the beating from cancelling the tone.
+a_strings = (a_string_1 * 0.8 + a_string_2 + a_string_3 * 0.65 + 2.45 * a_excitation) * 0.65
+endif
+; The model is louder in the bass than in the treble; even it out.
+if i_midi_key < 60 then
+i_key_compensation = ampdb(0.08 * (60 - i_midi_key))
+else
+i_key_compensation = ampdb(limit(0.12 * (i_midi_key - 60), 0, 6))
+endif
+a_strings = a_strings * i_key_compensation
+; In the top octaves a one-pole damping filter cannot sustain the short
+; strings for long enough, so a few stiff-string partials (decaying
+; sinusoids with inharmonic stretch) are blended in above key 74.
+i_modal_mix = limit((i_midi_key - 74) / 16, 0, 1)
+if i_modal_mix > 0 then
+i_inharmonicity = 0.0004 * 2 ^ ((i_midi_key - 60) / 8)
+i_partial_2 = 2 * i_frequency * sqrt(1 + i_inharmonicity * 4)
+i_partial_3 = 3 * i_frequency * sqrt(1 + i_inharmonicity * 9)
+a_modal_envelope_1 transeg 1, i_physical_decay, -6.9, 0
+a_modal_envelope_2 transeg 0.4, i_physical_decay * 0.6, -6.9, 0
+a_modal_envelope_3 transeg 0.15, i_physical_decay * 0.4, -6.9, 0
+a_modal_1 poscil a_modal_envelope_1, i_frequency, gi_GM_Acoustic_Grand_Piano_sine
+a_modal_2 poscil a_modal_envelope_2, i_partial_2, gi_GM_Acoustic_Grand_Piano_sine
+a_modal_3 poscil a_modal_envelope_3, i_partial_3, gi_GM_Acoustic_Grand_Piano_sine
+a_modal_onset linseg 0, 0.002, 1, 1, 1
+a_strings = a_strings * (1 - 0.6 * i_modal_mix) + (a_modal_1 + a_modal_2 + a_modal_3) * a_modal_onset * 0.25 * i_modal_mix
+endif
+; Soundboard radiation: the board radiates the low partials less well
+; than the upper ones (a shelf of about -4 dB below 500 Hz).
+a_strings_high butterhp a_strings, 500
+a_strings = a_strings * 0.6 + a_strings_high * 0.4
+; Soundboard body: the hammer blow and the key action knock the board,
+; which answers with a short, dense thump; the strings also drive it a
+; little, which colours the tone.
+a_action_noise rand 1
+a_action_envelope transeg 1, 0.004, -4, 0
+a_action butterlp a_action_noise * a_action_envelope, 1500
+; The wide bass pulses carry much more low-frequency energy than the
+; treble ones, so the knock is scaled down towards the bass.
+i_knock_gain = ampdb(-8.8 + limit(0.4 * (i_midi_key - 60), -20, 3.8))
+a_knock = (a_hammer * (1.0 + 0.5 * i_velocity) + a_action * 0.3 * i_velocity) * i_knock_gain
+a_to_board = a_knock * 0.5 + a_strings * 0.045
+a_mode_1 mode a_to_board, 62, 8
+a_mode_2 mode a_to_board, 97, 9
+a_mode_3 mode a_to_board, 141, 10
+a_mode_4 mode a_to_board, 196, 11
+a_mode_5 mode a_to_board, 263, 12
+a_mode_6 mode a_to_board, 347, 13
+a_mode_7 mode a_to_board, 455, 14
+a_mode_8 mode a_to_board, 603, 15
+a_mode_9 mode a_to_board, 790, 16
+a_mode_10 mode a_to_board, 1060, 16
+a_mode_11 mode a_to_board, 1430, 16
+a_mode_12 mode a_to_board, 1950, 16
+a_mode_13 mode a_to_board, 2700, 16
+a_board = (a_mode_1 + a_mode_2 + a_mode_3 + a_mode_4 + a_mode_5 + a_mode_6 + a_mode_7 + a_mode_8 + a_mode_9 + a_mode_10 + a_mode_11 + a_mode_12 + a_mode_13) * 0.05
+; The board radiates everything, with a gentle roll-off at the top.
+a_signal = a_strings + a_board * i_soundboard
+a_signal tonex a_signal, 8000, 1
+a_signal butterhp a_signal, 30
 a_signal dcblock a_signal, 0.9995
 a_signal = a_signal * i_amplitude * a_envelope * k_gain
 a_out_left, a_out_right pan2 a_signal, k_space_left_to_right
@@ -1835,11 +1932,11 @@ gk_GM_Rock_Organ_midi_dynamic_range chnexport "gk_GM_Rock_Organ_midi_dynamic_ran
 gk_GM_Rock_Organ_space_left_to_right chnexport "gk_GM_Rock_Organ_space_left_to_right", 3 ; Default pan position when p7 is 0.
 gk_GM_Rock_Organ_rotary_rate chnexport "gk_GM_Rock_Organ_rotary_rate", 3 ; Rotary speaker rate in Hz.
 gk_GM_Rock_Organ_drive chnexport "gk_GM_Rock_Organ_drive", 3 ; Overdrive amount, 0 for clean.
-gk_GM_Rock_Organ_level init 0
+gk_GM_Rock_Organ_level init -4
 gk_GM_Rock_Organ_midi_dynamic_range init 20
 gk_GM_Rock_Organ_space_left_to_right init 0.5
 gk_GM_Rock_Organ_rotary_rate init 5.5
-gk_GM_Rock_Organ_drive init 0.45
+gk_GM_Rock_Organ_drive init 0.4
 gi_GM_Rock_Organ_sine ftgen 0, 0, 65537, 10, 1
 instr GM_Rock_Organ
 ; General MIDI program 19: Rock Organ.
@@ -1885,7 +1982,7 @@ a_h2 poscil 0.7500, i_frequency * 2, gi_GM_Rock_Organ_sine ; 4'
 a_signal = a_signal + a_h2
 a_h4 poscil 0.5000, i_frequency * 4, gi_GM_Rock_Organ_sine ; 2'
 a_signal = a_signal + a_h4
-a_h8 poscil 0.5000, i_frequency * 8, gi_GM_Rock_Organ_sine ; 1'
+a_h8 poscil 0.3750, i_frequency * 8, gi_GM_Rock_Organ_sine ; 1'
 a_signal = a_signal + a_h8
 ; Key click.
 a_click_noise rand 1
@@ -1899,7 +1996,7 @@ if i_drive > 0 then
 a_signal = tanh(a_signal * (1 + 4 * i_drive)) / (1 + i_drive)
 endif
 ; Speaker cabinet: rolls off the harmonics added by the overdrive.
-a_signal tonex a_signal, 4500, 2
+a_signal tonex a_signal, 3600, 2
 a_signal butterhp a_signal, 60
 ; Rotary speaker: a modulated delay mixed with the direct sound.
 a_rotary vdelay3 a_signal, 4 + a_rotary_lfo, 20
@@ -1917,7 +2014,7 @@ gk_GM_Church_Organ_level chnexport "gk_GM_Church_Organ_level", 3 ; Gain in dB ap
 gk_GM_Church_Organ_midi_dynamic_range chnexport "gk_GM_Church_Organ_midi_dynamic_range", 3 ; Range in dB between MIDI velocity 0 and 127.
 gk_GM_Church_Organ_space_left_to_right chnexport "gk_GM_Church_Organ_space_left_to_right", 3 ; Default pan position when p7 is 0.
 gk_GM_Church_Organ_wind chnexport "gk_GM_Church_Organ_wind", 3 ; Random pitch unsteadiness of the wind supply.
-gk_GM_Church_Organ_level init 0
+gk_GM_Church_Organ_level init -3
 gk_GM_Church_Organ_midi_dynamic_range init 20
 gk_GM_Church_Organ_space_left_to_right init 0.5
 gk_GM_Church_Organ_wind init 0.0015
@@ -4446,7 +4543,7 @@ gk_GM_Choir_Aahs_midi_dynamic_range chnexport "gk_GM_Choir_Aahs_midi_dynamic_ran
 gk_GM_Choir_Aahs_space_left_to_right chnexport "gk_GM_Choir_Aahs_space_left_to_right", 3 ; Default pan position when p7 is 0.
 gk_GM_Choir_Aahs_vibrato_depth chnexport "gk_GM_Choir_Aahs_vibrato_depth", 3 ; Vibrato depth in semitones.
 gk_GM_Choir_Aahs_vibrato_rate chnexport "gk_GM_Choir_Aahs_vibrato_rate", 3 ; Vibrato rate in Hz.
-gk_GM_Choir_Aahs_level init 0
+gk_GM_Choir_Aahs_level init -4
 gk_GM_Choir_Aahs_midi_dynamic_range init 20
 gk_GM_Choir_Aahs_space_left_to_right init 0.5
 gk_GM_Choir_Aahs_vibrato_depth init 0.25
@@ -4564,7 +4661,7 @@ a_chorus_lfo_2 poscil 1.2, 0.47, gi_GM_Choir_Aahs_sine
 a_chorus_1 vdelay3 a_signal, 16 + a_chorus_lfo_1, 40
 a_chorus_2 vdelay3 a_signal, 23 + a_chorus_lfo_2, 40
 a_signal = a_signal * 0.6 + (a_chorus_1 + a_chorus_2) * 0.3
-a_signal tonex a_signal, 6000, 1
+a_signal tonex a_signal, 4500, 2
 a_signal dcblock a_signal, 0.9995
 a_signal = a_signal * i_amplitude * a_envelope * k_gain
 a_out_left, a_out_right pan2 a_signal, k_space_left_to_right
@@ -4579,7 +4676,7 @@ gk_GM_Voice_Oohs_midi_dynamic_range chnexport "gk_GM_Voice_Oohs_midi_dynamic_ran
 gk_GM_Voice_Oohs_space_left_to_right chnexport "gk_GM_Voice_Oohs_space_left_to_right", 3 ; Default pan position when p7 is 0.
 gk_GM_Voice_Oohs_vibrato_depth chnexport "gk_GM_Voice_Oohs_vibrato_depth", 3 ; Vibrato depth in semitones.
 gk_GM_Voice_Oohs_vibrato_rate chnexport "gk_GM_Voice_Oohs_vibrato_rate", 3 ; Vibrato rate in Hz.
-gk_GM_Voice_Oohs_level init 0
+gk_GM_Voice_Oohs_level init -4
 gk_GM_Voice_Oohs_midi_dynamic_range init 20
 gk_GM_Voice_Oohs_space_left_to_right init 0.5
 gk_GM_Voice_Oohs_vibrato_depth init 0.25
@@ -4682,7 +4779,7 @@ a_chorus_lfo_2 poscil 1.2, 0.47, gi_GM_Voice_Oohs_sine
 a_chorus_1 vdelay3 a_signal, 16 + a_chorus_lfo_1, 40
 a_chorus_2 vdelay3 a_signal, 23 + a_chorus_lfo_2, 40
 a_signal = a_signal * 0.6 + (a_chorus_1 + a_chorus_2) * 0.3
-a_signal tonex a_signal, 6000, 1
+a_signal tonex a_signal, 4500, 2
 a_signal dcblock a_signal, 0.9995
 a_signal = a_signal * i_amplitude * a_envelope * k_gain
 a_out_left, a_out_right pan2 a_signal, k_space_left_to_right
@@ -4868,7 +4965,7 @@ gk_GM_Trumpet_space_left_to_right chnexport "gk_GM_Trumpet_space_left_to_right",
 gk_GM_Trumpet_index chnexport "gk_GM_Trumpet_index", 3 ; Peak FM index; higher is brighter.
 gk_GM_Trumpet_vibrato_depth chnexport "gk_GM_Trumpet_vibrato_depth", 3 ; Vibrato depth in semitones.
 gk_GM_Trumpet_vibrato_rate chnexport "gk_GM_Trumpet_vibrato_rate", 3 ; Vibrato rate in Hz.
-gk_GM_Trumpet_level init 0
+gk_GM_Trumpet_level init -4
 gk_GM_Trumpet_midi_dynamic_range init 20
 gk_GM_Trumpet_space_left_to_right init 0.5
 gk_GM_Trumpet_index init 5.0
@@ -14772,12 +14869,12 @@ i "GM_Acoustic_Grand_Piano"  261.8398  0.1417  64  54 0 0.38 0 0
 i "GM_Acoustic_Grand_Piano"  261.8435  0.1417  57  51 0 0.38 0 0
 i "GM_Acoustic_Bass"  262.0000  3.0000  41  86 0 0.50 0 0
 i "GM_Acoustic_Grand_Piano"  262.0000  3.0000  57  72 0 0.38 0 0
-i "GM_Acoustic_Grand_Piano"  262.0000  3.0000  60  72 0 0.38 0 0
-i "GM_Acoustic_Grand_Piano"  262.0000  3.0000  64  72 0 0.38 0 0
-i "GM_Acoustic_Grand_Piano"  262.0000  3.0000  67  72 0 0.38 0 0
-i "GM_Acoustic_Grand_Piano"  262.0000  3.0000  72  72 0 0.38 0 0
 i "GM_Standard_Kit"  262.0000  0.5000  49  90 0 0.70 0 0
 i "GM_Standard_Kit"  262.0000  0.5000  36  70 0 0.50 0 0
+i "GM_Acoustic_Grand_Piano"  262.0080  2.9920  60  72 0 0.38 0 0
+i "GM_Acoustic_Grand_Piano"  262.0160  2.9840  64  72 0 0.38 0 0
+i "GM_Acoustic_Grand_Piano"  262.0240  2.9760  67  72 0 0.38 0 0
+i "GM_Acoustic_Grand_Piano"  262.0320  2.9680  72  72 0 0.38 0 0
 i "GM_Vibraphone"  262.3333  2.8000  69  70 0 0.60 0 0
 i "GM_Vibraphone"  262.3333  2.8000  72  70 0 0.60 0 0
 i "GM_Vibraphone"  262.3333  2.8000  76  70 0 0.60 0 0
